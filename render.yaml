@@ -12,6 +12,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: 22.14.0
+        value: 20.18.3
     plan: free
     healthCheckPath: /api/auth/me
