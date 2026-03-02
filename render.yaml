@@ -11,5 +11,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 22.14.0
     plan: free
     healthCheckPath: /api/auth/me

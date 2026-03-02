@@ -4,6 +4,9 @@
 
 set -e
 
+echo "=== Cleaning node_modules cache ==="
+rm -rf node_modules
+
 echo "=== Installing Node.js dependencies ==="
 npm install --production
 
