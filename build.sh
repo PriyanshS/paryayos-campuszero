@@ -7,6 +7,9 @@ set -e
 echo "=== Installing Node.js dependencies ==="
 npm install --production
 
+echo "=== Rebuilding native modules ==="
+npm rebuild better-sqlite3
+
 echo "=== Verifying Python3 ==="
 python3 --version
 
