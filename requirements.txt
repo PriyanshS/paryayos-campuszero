@@ -1,0 +1,2 @@
+# No external dependencies needed — uses only Python stdlib (json, math, sqlite3, sys)
+# This file exists so Render knows to install Python runtime

@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusZero — Game Interface</title>
+  <meta name="description"
+    content="CampusZero Net-Zero Campus Management Game. Monitor, simulate, and optimize your campus energy, water, and waste.">
+  <link rel="stylesheet" href="css/game.css">
+  <!-- Three.js via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+
+  <!-- ═════════════════════════════════════════════════
+     VIEW: REGISTRATION (shown if not logged in)
+═════════════════════════════════════════════════ -->
+  <div id="view-register" style="display:none">
+    <div class="reg-container">
+      <div class="reg-card">
+        <!-- Step Indicator -->
+        <div class="reg-step-indicator">
+          <div class="reg-step-dot active" id="step-dot-1">1</div>
+          <div class="reg-step-line" id="step-line-1"></div>
+          <div class="reg-step-dot" id="step-dot-2">2</div>
+        </div>
+
+        <!-- Step 1: Campus Info -->
+        <div id="reg-step-1">
+          <div class="reg-logo">
+            <div class="dot"></div>CampusZero
+          </div>
+          <div class="reg-subtitle">Register your campus to begin the Net-Zero journey. Step 1: Tell us about your
+            institution.</div>
+
+          <div class="form-group">
+            <label>Institution Name</label>
+            <input type="text" id="reg-institution" placeholder="e.g., Delhi Technological University">
+          </div>
+          <div class="form-group">
+            <label>Campus Location (Lat, Lng)</label>
+            <input type="text" id="reg-location" placeholder="e.g., 28.7501, 77.1177">
+            <div class="map-picker-note">Enter latitude, longitude coordinates of your campus center</div>
+          </div>
+          <div class="form-group">
+            <label>Campus Address</label>
+            <input type="text" id="reg-address" placeholder="e.g., Shahbad Daulatpur, Delhi">
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToStep2()">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Admin Auth -->
+        <div id="reg-step-2" style="display:none">
+          <div class="reg-logo">
+            <div class="dot"></div>CampusZero
+          </div>
+          <div class="reg-subtitle">Step 2: Administrator authentication. This will be your login for the platform.
+          </div>
+
+          <div class="form-group">
+            <label>Administrator Name</label>
+            <input type="text" id="reg-admin-name" placeholder="e.g., Dr. Sharma">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="reg-admin-email" placeholder="admin@university.edu.in">
+          </div>
+
+          <div style="margin:24px 0;text-align:center;color:var(--text-dim);font-size:11px">─── or ───</div>
+
+          <button class="btn-google" onclick="googleLogin()">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                fill="#4285F4" />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853" />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05" />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335" />
+            </svg>
+            Sign in with Google
+          </button>
+
+          <div class="btn-group">
+            <button class="btn btn-ghost" onclick="goToStep1()">← Back</button>
+            <button class="btn btn-primary" onclick="completeRegistration()">Complete Registration ✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════
+     VIEW: MODE SELECTION
+═════════════════════════════════════════════════ -->
+  <div id="view-mode" style="display:none">
+    <div class="reg-container">
+      <div class="reg-card" style="max-width:600px">
+        <div class="reg-logo">
+          <div class="dot"></div>CampusZero
+        </div>
+        <div class="reg-subtitle">Choose how you want to feed data into your digital twin. You can change this later.
+        </div>
+
+        <div class="mode-cards">
+          <div class="mode-card" id="mode-static" onclick="selectMode('static')">
+            <div class="mode-icon">📊</div>
+            <div class="mode-name">Static Mode</div>
+            <div class="mode-desc">Upload CSV/Excel files manually. Daily upload prompts. Best for campuses without IoT
+              sensors.</div>
+          </div>
+          <div class="mode-card" id="mode-dynamic" onclick="selectMode('dynamic')">
+            <div class="mode-icon">📡</div>
+            <div class="mode-name">Dynamic Mode</div>
+            <div class="mode-desc">Simulated real-time IoT sensor data. Auto-updates every 5 seconds. Best for demo &
+              testing.</div>
+          </div>
+        </div>
+
+        <div class="btn-group" style="justify-content:center">
+          <button class="btn btn-primary" onclick="confirmMode()" id="mode-confirm-btn"
+            style="opacity:0.4;pointer-events:none">Launch CampusZero →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════
+     VIEW: GAME INTERFACE
+═════════════════════════════════════════════════ -->
+  <div id="view-game" style="display:none">
+    <div class="game-container">
+
+      <!-- ── Header ── -->
+      <div class="game-header">
+        <div class="gh-left">
+          <div class="gh-logo">
+            <div class="dot"></div>CampusZero
+          </div>
+          <div class="gh-campus-name" id="gh-campus-name">—</div>
+        </div>
+        <div class="gh-center">
+          <button class="gh-nav-btn active" data-view="twin">🏛️ Twin</button>
+          <button class="gh-nav-btn" data-view="data" onclick="openModal('upload-modal')">📊 Data</button>
+          <button class="gh-nav-btn" data-view="predict" onclick="openModal('predict-modal')">🤖 Predict</button>
+          <button class="gh-nav-btn" data-view="chat" onclick="openModal('chat-modal')">💬 Net-Zero AI</button>
+          <button class="gh-nav-btn" data-view="cba" onclick="openModal('cba-modal')">💰 CBA</button>
+          <button class="gh-nav-btn" onclick="window.location.href='../campuszero-unified.html'">📋 Overview</button>
+        </div>
+        <div class="gh-right">
+          <div class="xp-bar-container">
+            <div class="xp-level" id="xp-level">L1</div>
+            <div class="xp-bar-wrap">
+              <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
+            </div>
+            <div class="xp-text" id="xp-text">0 XP</div>
+          </div>
+          <div class="alert-bell" onclick="openModal('alerts-modal')">
+            🔔<span class="alert-badge" id="alert-badge">0</span>
+          </div>
+          <div class="gh-clock">SYNC <span id="game-clock">--:--:--</span></div>
+        </div>
+      </div>
+
+      <!-- ── Sidebar ── -->
+      <div class="game-sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Campus Buildings</div>
+          <div class="building-list" id="building-list"></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-title">Quick Actions</div>
+          <div class="quick-actions">
+            <button class="qa-btn" onclick="openModal('upload-modal')"><span class="icon">📤</span>Upload Data</button>
+            <button class="qa-btn" onclick="openModal('chat-modal')"><span class="icon">💬</span>Net-Zero AI</button>
+            <button class="qa-btn" onclick="openModal('predict-modal')"><span class="icon">📈</span>Predictions</button>
+            <button class="qa-btn" onclick="openModal('roadmap-modal')"><span class="icon">🗺️</span>Roadmap</button>
+            <button class="qa-btn" onclick="openModal('cba-modal')"><span class="icon">💰</span>CBA Report</button>
+          </div>
+        </div>
+        <div class="sidebar-section" style="margin-top:auto">
+          <div class="sidebar-title">Game Stats</div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.8">
+            <div>🏆 Level: <span id="sb-level" style="color:var(--gold)">1</span> <span id="sb-title"
+                style="color:var(--text-dim)">Carbon Rookie</span></div>
+            <div>⚡ XP: <span id="sb-xp" style="color:var(--green)">0</span></div>
+            <div>🔥 Streak: <span id="sb-streak" style="color:var(--amber)">0</span> days</div>
+            <div>📅 Total Days: <span id="sb-days" style="color:var(--text)">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3D Canvas ── -->
+      <div class="game-canvas">
+        <div id="twin-canvas"></div>
+        <div id="alert-container"></div>
+      </div>
+
+      <!-- ── Right Panel ── -->
+      <div class="game-panel">
+        <div class="panel-tab-bar">
+          <button class="panel-tab active" data-panel="metrics" onclick="switchPanel('metrics')">⚡ Metrics</button>
+          <button class="panel-tab" data-panel="sensors" onclick="switchPanel('sensors')">📡 Sensors</button>
+          <button class="panel-tab" data-panel="building" onclick="switchPanel('building')">🏢 Building</button>
+        </div>
+
+        <!-- Metrics Panel -->
+        <div class="panel-content active" id="panel-metrics">
+          <div class="panel-section">
+            <div class="panel-section-title">⚡ Power</div>
+            <div class="metric-card">
+              <div class="metric-card-header">
+                <div class="metric-card-label">Consumption</div>
+                <div class="metric-card-badge green" id="mc-power-badge">LIVE</div>
+              </div>
+              <div class="metric-card-value" id="mc-power-val" style="color:var(--green)">—</div>
+              <div class="metric-card-unit">kWh today</div>
+              <div class="metric-mini-bar">
+                <div class="metric-mini-bar-fill" id="mc-power-bar" style="width:0%;background:var(--green)"></div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-header">
+                <div class="metric-card-label">Generation</div>
+                <div class="metric-card-badge green">SOLAR</div>
+              </div>
+              <div class="metric-card-value" id="mc-gen-val" style="color:var(--amber)">—</div>
+              <div class="metric-card-unit">kWh generated</div>
+              <div class="metric-mini-bar">
+                <div class="metric-mini-bar-fill" id="mc-gen-bar" style="width:0%;background:var(--amber)"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-section-title">💧 Water</div>
+            <div class="metric-card">
+              <div class="metric-card-header">
+                <div class="metric-card-label">Consumption</div>
+                <div class="metric-card-badge green">LIVE</div>
+              </div>
+              <div class="metric-card-value" id="mc-water-val" style="color:var(--blue)">—</div>
+              <div class="metric-card-unit">Liters today</div>
+              <div class="metric-mini-bar">
+                <div class="metric-mini-bar-fill" id="mc-water-bar" style="width:0%;background:var(--blue)"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-section-title">♻️ Waste</div>
+            <div class="metric-card">
+              <div class="metric-card-header">
+                <div class="metric-card-label">Output</div>
+                <div class="metric-card-badge amber">TRACKING</div>
+              </div>
+              <div class="metric-card-value" id="mc-waste-val" style="color:var(--purple)">—</div>
+              <div class="metric-card-unit">kg today</div>
+              <div class="metric-mini-bar">
+                <div class="metric-mini-bar-fill" id="mc-waste-bar" style="width:0%;background:var(--purple)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensors Panel -->
+        <div class="panel-content" id="panel-sensors">
+          <div class="panel-section">
+            <div class="panel-section-title">📡 Live Sensor Feed</div>
+            <div id="sensor-feed" style="font-size:11px;color:var(--text-muted);line-height:2"></div>
+          </div>
+        </div>
+
+        <!-- Building Detail Panel -->
+        <div class="panel-content" id="panel-building">
+          <div class="panel-section" id="building-detail">
+            <div style="color:var(--text-dim);font-size:11px;text-align:center;padding:40px 0">Click a building in the
+              3D view to see details</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Footer ── -->
+      <div class="game-footer">
+        <div class="nz-bars">
+          <div class="nz-bar-group">
+            <div class="nz-bar-label">🔴 Consumed</div>
+            <div class="nz-bar-wrap">
+              <div class="nz-bar-fill consumed" id="nz-consumed" style="width:0%"></div>
+            </div>
+            <div class="nz-bar-val" id="nz-consumed-val" style="color:var(--amber)">0 kWh</div>
+          </div>
+          <div class="nz-bar-group">
+            <div class="nz-bar-label">🟢 Generated</div>
+            <div class="nz-bar-wrap">
+              <div class="nz-bar-fill generated" id="nz-generated" style="width:0%"></div>
+            </div>
+            <div class="nz-bar-val" id="nz-generated-val" style="color:var(--green)">0 kWh</div>
+          </div>
+        </div>
+        <div class="nz-divider"></div>
+        <div class="footer-stats">
+          <div class="footer-stat">
+            <div class="val" id="ft-ratio">0%</div>
+            <div class="lbl">Net-Zero</div>
+          </div>
+          <div class="footer-stat">
+            <div class="val" id="ft-streak" style="color:var(--amber)">0</div>
+            <div class="lbl">Streak</div>
+          </div>
+          <div class="footer-stat">
+            <div class="val" id="ft-sensors" style="color:var(--blue)">15</div>
+            <div class="lbl">Sensors</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════
+     MODALS
+═════════════════════════════════════════════════ -->
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="upload-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📤 Data Upload</div>
+        <button class="modal-close" onclick="closeModal('upload-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="upload-pillar-tabs">
+          <button class="pillar-tab active" data-pillar="power" onclick="selectUploadPillar('power',this)">⚡
+            Power</button>
+          <button class="pillar-tab" data-pillar="water" onclick="selectUploadPillar('water',this)">💧 Water</button>
+          <button class="pillar-tab" data-pillar="waste" onclick="selectUploadPillar('waste',this)">♻️ Waste</button>
+        </div>
+        <div class="upload-area" id="upload-area" ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">Drag & drop your CSV file here</div>
+          <div class="upload-hint">or click to browse. Required columns: date, consumption value.</div>
+          <input type="file" id="upload-input" accept=".csv,.txt" style="display:none"
+            onchange="handleFileSelect(event)">
+        </div>
+        <div id="upload-result" style="margin-top:16px"></div>
+        <div style="margin-top:16px;text-align:center">
+          <button class="btn btn-ghost" onclick="loadSampleData()" style="font-size:11px">Load 90-Day Sample
+            Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Modal (Net-Zero Engine) -->
+  <div class="modal-overlay" id="chat-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">💬 Net-Zero AI Engine</div>
+        <button class="modal-close" onclick="closeModal('chat-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg bot">Hi! I'm your Net-Zero advisor. Ask me about <strong>solar</strong>, <strong>water
+              conservation</strong>, <strong>waste management</strong>, or type <strong>"suggest"</strong> for
+            personalized recommendations based on your campus data. 🌱</div>
+        </div>
+        <div class="chat-input-wrap">
+          <input class="chat-input" id="chat-input" placeholder="Ask about net-zero solutions..."
+            onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Predictions Modal -->
+  <div class="modal-overlay" id="predict-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🤖 AI Predictions & Warnings</div>
+        <button class="modal-close" onclick="closeModal('predict-modal')">✕</button>
+      </div>
+      <div class="modal-body" id="predict-body">
+        <div style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px">Loading predictions...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CBA Modal -->
+  <div class="modal-overlay" id="cba-modal">
+    <div class="modal" style="max-width:800px">
+      <div class="modal-header">
+        <div class="modal-title">💰 Cost-Benefit Analysis</div>
+        <button class="modal-close" onclick="closeModal('cba-modal')">✕</button>
+      </div>
+      <div class="modal-body" id="cba-body"></div>
+    </div>
+  </div>
+
+  <!-- Roadmap Modal -->
+  <div class="modal-overlay" id="roadmap-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🗺️ Net-Zero Roadmap</div>
+        <button class="modal-close" onclick="closeModal('roadmap-modal')">✕</button>
+      </div>
+      <div class="modal-body" id="roadmap-body"></div>
+    </div>
+  </div>
+
+  <!-- Alerts Modal -->
+  <div class="modal-overlay" id="alerts-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🔔 Alert History</div>
+        <button class="modal-close" onclick="closeModal('alerts-modal')">✕</button>
+      </div>
+      <div class="modal-body" id="alerts-body"></div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════
+     SCRIPTS
+═════════════════════════════════════════════════ -->
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ingestion.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/predict.js"></script>
+  <script src="js/netzero-engine.js"></script>
+  <script src="js/cba.js"></script>
+  <script src="js/twin.js"></script>
+
+  <script>
+    // ═══════════════════════════════════════════════════════
+    //  APP CONTROLLER (Async — all data via REST API)
+    // ═══════════════════════════════════════════════════════
+
+    let selectedUploadPillar = 'power';
+    let selectedMode = null;
+
+    // ── Routing ──
+    function showView(view) {
+      document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+      const el = document.getElementById('view-' + view);
+      if (el) el.style.display = 'block';
+    }
+
+    async function initApp() {
+      const loggedIn = await Auth.isAuthenticated();
+      if (loggedIn) {
+        const mode = await Store.getMode();
+        if (mode) {
+          await launchGame();
+        } else {
+          showView('mode');
+        }
+      } else {
+        showView('register');
+      }
+    }
+
+    // ── Registration ──
+    function goToStep2() {
+      const inst = document.getElementById('reg-institution').value.trim();
+      const loc = document.getElementById('reg-location').value.trim();
+      if (!inst) { alert('Please enter institution name'); return; }
+      if (!loc) { alert('Please enter campus coordinates'); return; }
+      document.getElementById('reg-step-1').style.display = 'none';
+      document.getElementById('reg-step-2').style.display = 'block';
+      document.getElementById('step-dot-1').classList.remove('active');
+      document.getElementById('step-dot-1').classList.add('completed');
+      document.getElementById('step-dot-1').textContent = '✓';
+      document.getElementById('step-line-1').classList.add('active');
+      document.getElementById('step-dot-2').classList.add('active');
+    }
+
+    function goToStep1() {
+      document.getElementById('reg-step-2').style.display = 'none';
+      document.getElementById('reg-step-1').style.display = 'block';
+      document.getElementById('step-dot-1').classList.add('active');
+      document.getElementById('step-dot-1').classList.remove('completed');
+      document.getElementById('step-dot-1').textContent = '1';
+      document.getElementById('step-line-1').classList.remove('active');
+      document.getElementById('step-dot-2').classList.remove('active');
+    }
+
+    function googleLogin() {
+      const nameInput = document.getElementById('reg-admin-name');
+      const emailInput = document.getElementById('reg-admin-email');
+      nameInput.value = nameInput.value || 'Admin User';
+      emailInput.value = emailInput.value || 'admin@campus.edu.in';
+      completeRegistration();
+    }
+
+    async function completeRegistration() {
+      const inst = document.getElementById('reg-institution').value.trim();
+      const loc = document.getElementById('reg-location').value.trim();
+      const addr = document.getElementById('reg-address').value.trim();
+      const name = document.getElementById('reg-admin-name').value.trim();
+      const email = document.getElementById('reg-admin-email').value.trim();
+
+      if (!name || !email) { alert('Please fill in your name and email'); return; }
+
+      const [lat, lng] = loc.split(',').map(v => parseFloat(v.trim()));
+
+      await Auth.register({
+        institutionName: inst,
+        campusLat: lat || 28.7501,
+        campusLng: lng || 77.1177,
+        campusAddress: addr,
+        adminName: name,
+        adminEmail: email,
+        bbox: lat && lng ? [lat - 0.005, lng - 0.005, lat + 0.005, lng + 0.005] : null
+      });
+
+      showView('mode');
+    }
+
+    // ── Mode Selection ──
+    function selectMode(mode) {
+      selectedMode = mode;
+      document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('mode-' + mode).classList.add('selected');
+      const btn = document.getElementById('mode-confirm-btn');
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    }
+
+    async function confirmMode() {
+      if (!selectedMode) return;
+      await Store.setMode(selectedMode);
+      await launchGame();
+    }
+
+    // ── Launch Game ──
+    async function launchGame() {
+      showView('game');
+
+      const campus = await Store.getCampus();
+      if (campus) {
+        document.getElementById('gh-campus-name').textContent = campus.name || 'My Campus';
+      }
+
+      // Init 3D Twin
+      setTimeout(() => {
+        Twin.init('twin-canvas');
+        if (campus && campus.bbox) {
+          Twin.loadCampus(campus.bbox);
+        } else {
+          Twin.generateProceduralCampus();
+        }
+      }, 100);
+
+      // Init alerts
+      Alerts.init('alert-container');
+
+      // Start simulated data if dynamic mode
+      const mode = await Store.getMode();
+      if (mode === 'dynamic') {
+        Ingestion.startSimulation((data) => {
+          updateMetrics(data);
+        });
+      }
+
+      // Populate building list
+      setTimeout(populateBuildingList, 500);
+
+      // Update game state
+      await Game.processDay();
+      await updateGameUI();
+
+      // Clock
+      updateGameClock();
+      setInterval(updateGameClock, 1000);
+
+      // Periodic UI updates
+      setInterval(async () => {
+        await updateGameUI();
+        await updateAlertBadge();
+      }, 5000);
+
+      // Building click handler
+      document.addEventListener('buildingSelected', (e) => {
+        showBuildingDetail(e.detail);
+      });
+
+      // Check for upload prompt (static mode)
+      const shouldPrompt = await Ingestion.shouldPromptUpload();
+      if (shouldPrompt) {
+        setTimeout(async () => {
+          await Store.addAlert({
+            key: 'daily_upload',
+            title: '📊 Daily Data Upload Needed',
+            msg: 'It\'s been over 24 hours since your last data upload. Please upload today\'s Power, Water, and Waste CSV files.',
+            type: 'info',
+            icon: '📊',
+            actions: [{ label: 'Upload Now', action: 'accept' }]
+          });
+          const alerts = await Store.getAlerts();
+          if (alerts.length > 0) Alerts.renderAlertPopup(alerts[0]);
+        }, 3000);
+      }
+    }
+
+    // ── UI Updates ──
+    function updateGameClock() {
+      const el = document.getElementById('game-clock');
+      if (el) el.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    async function updateGameUI() {
+      const stats = await Game.getStats();
+
+      // XP Bar
+      document.getElementById('xp-level').textContent = 'L' + stats.level;
+      document.getElementById('xp-bar-fill').style.width = stats.levelInfo.progress + '%';
+      document.getElementById('xp-text').textContent = stats.xp + ' XP';
+
+      // Sidebar stats
+      document.getElementById('sb-level').textContent = stats.level;
+      document.getElementById('sb-title').textContent = stats.levelInfo.current.title;
+      document.getElementById('sb-xp').textContent = stats.xp;
+      document.getElementById('sb-streak').textContent = stats.streak;
+      document.getElementById('sb-days').textContent = stats.totalDays;
+
+      // Net-Zero bars
+      const maxVal = Math.max(stats.consumed, stats.generated, 1);
+      document.getElementById('nz-consumed').style.width = (stats.consumed / maxVal * 100) + '%';
+      document.getElementById('nz-generated').style.width = (stats.generated / maxVal * 100) + '%';
+      document.getElementById('nz-consumed-val').textContent = Math.round(stats.consumed) + ' kWh';
+      document.getElementById('nz-generated-val').textContent = Math.round(stats.generated) + ' kWh';
+
+      // Footer
+      document.getElementById('ft-ratio').textContent = stats.ratio.toFixed(1) + '%';
+      document.getElementById('ft-streak').textContent = stats.streak;
+
+      // Update metrics from latest readings
+      const readings = await Store.getReadings();
+      if (readings.power.length > 0) {
+        const lastP = readings.power[readings.power.length - 1];
+        document.getElementById('mc-power-val').textContent = lastP.consumption_kwh || '—';
+        document.getElementById('mc-power-bar').style.width = Math.min(100, (lastP.consumption_kwh || 0) / 200 * 100) + '%';
+        document.getElementById('mc-gen-val').textContent = lastP.generation_kwh || '—';
+        document.getElementById('mc-gen-bar').style.width = Math.min(100, (lastP.generation_kwh || 0) / 150 * 100) + '%';
+      }
+      if (readings.water.length > 0) {
+        const lastW = readings.water[readings.water.length - 1];
+        document.getElementById('mc-water-val').textContent = lastW.consumption_liters || '—';
+        document.getElementById('mc-water-bar').style.width = Math.min(100, (lastW.consumption_liters || 0) / 8000 * 100) + '%';
+      }
+      if (readings.waste.length > 0) {
+        const lastWa = readings.waste[readings.waste.length - 1];
+        document.getElementById('mc-waste-val').textContent = lastWa.total_kg || '—';
+        document.getElementById('mc-waste-bar').style.width = Math.min(100, (lastWa.total_kg || 0) / 100 * 100) + '%';
+      }
+    }
+
+    function updateMetrics(data) {
+      if (data.power) {
+        document.getElementById('mc-power-val').textContent = data.power.consumption_kwh;
+        document.getElementById('mc-gen-val').textContent = data.power.generation_kwh;
+      }
+      if (data.water) {
+        document.getElementById('mc-water-val').textContent = data.water.consumption_liters;
+      }
+      if (data.waste) {
+        document.getElementById('mc-waste-val').textContent = data.waste.total_kg;
+      }
+
+      // Update sensor feed
+      const feed = document.getElementById('sensor-feed');
+      if (feed) {
+        const time = new Date().toLocaleTimeString('en-IN');
+        const line = `<div style="border-bottom:1px solid var(--border);padding:4px 0"><span style="color:var(--green)">[${time}]</span> ⚡${data.power.consumption_kwh}kWh 💧${data.water.consumption_liters}L ♻️${data.waste.total_kg}kg</div>`;
+        feed.innerHTML = line + feed.innerHTML;
+        if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+      }
+    }
+
+    async function updateAlertBadge() {
+      const count = await Store.getUnreadCount();
+      const badge = document.getElementById('alert-badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+      }
+    }
+
+    function populateBuildingList() {
+      const list = document.getElementById('building-list');
+      if (!list) return;
+      const buildings = Twin.buildings || [];
+      if (buildings.length === 0) {
+        list.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px">Loading buildings...</div>';
+        return;
+      }
+      list.innerHTML = buildings.map((b, i) => {
+        const d = b.data || b.mesh?.userData || {};
+        const status = d.sensorStatus || 'online';
+        const dotClass = status === 'online' ? '' : status === 'alert' ? 'warning' : 'offline';
+        return `<div class="building-item" onclick="focusBuilding(${i})">
+      <div class="building-dot ${dotClass}"></div>
+      <div class="building-info">
+        <div class="building-name">${d.name || 'Building ' + i}</div>
+        <div class="building-meta">${d.type || 'structure'}</div>
+      </div>
+      <div class="building-val ${status === 'alert' ? 'warning' : ''}">${d.powerUsage || Math.round(50 + Math.random() * 100)} kW</div>
+    </div>`;
+      }).join('');
+    }
+
+    function focusBuilding(idx) {
+      const b = Twin.buildings[idx];
+      if (b && b.mesh) {
+        document.dispatchEvent(new CustomEvent('buildingSelected', { detail: b.mesh.userData }));
+      }
+    }
+
+    function showBuildingDetail(data) {
+      switchPanel('building');
+      const el = document.getElementById('building-detail');
+      el.innerHTML = `
+    <div class="panel-section-title">🏢 ${data.name || 'Building'}</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:16px">Type: ${data.type || 'N/A'} · Height: ${data.height || 'N/A'}m</div>
+    <div class="metric-card">
+      <div class="metric-card-label">POWER USAGE</div>
+      <div class="metric-card-value" style="color:var(--green)">${data.powerUsage || Math.round(50 + Math.random() * 100)}</div>
+      <div class="metric-card-unit">kW current load</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-label">WATER USAGE</div>
+      <div class="metric-card-value" style="color:var(--blue)">${data.waterUsage || Math.round(500 + Math.random() * 1500)}</div>
+      <div class="metric-card-unit">Liters/day</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-label">WASTE OUTPUT</div>
+      <div class="metric-card-value" style="color:var(--purple)">${data.wasteOutput || Math.round(10 + Math.random() * 40)}</div>
+      <div class="metric-card-unit">kg/day</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-header">
+        <div class="metric-card-label">SENSOR STATUS</div>
+        <div class="metric-card-badge ${data.sensorStatus === 'online' ? 'green' : 'amber'}">${(data.sensorStatus || 'ONLINE').toUpperCase()}</div>
+      </div>
+    </div>
+  `;
+    }
+
+    // ── Panel Switching ──
+    function switchPanel(panelId) {
+      document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+      document.querySelector(`[data-panel="${panelId}"]`)?.classList.add('active');
+      document.getElementById('panel-' + panelId)?.classList.add('active');
+    }
+
+    // ── Modal System ──
+    function openModal(id) {
+      document.getElementById(id)?.classList.add('active');
+      if (id === 'predict-modal') renderPredictions();
+      if (id === 'cba-modal') renderCBA();
+      if (id === 'roadmap-modal') renderRoadmap();
+      if (id === 'alerts-modal') renderAlertHistory();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id)?.classList.remove('active');
+    }
+
+    // Close modals on overlay click
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('active');
+      }
+    });
+
+    // ── File Upload ──
+    function selectUploadPillar(pillar, btn) {
+      selectedUploadPillar = pillar;
+      document.querySelectorAll('.pillar-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    document.getElementById('upload-area')?.addEventListener('click', () => {
+      document.getElementById('upload-input').click();
+    });
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) processUpload(file);
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-area').classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) processUpload(file);
+    }
+
+    async function processUpload(file) {
+      const resultEl = document.getElementById('upload-result');
+      resultEl.innerHTML = '<div style="color:var(--text-muted)">Processing...</div>';
+      try {
+        const result = await Ingestion.handleFileUpload(file, selectedUploadPillar);
+        let html = `<div style="color:var(--green)">✓ Successfully imported ${result.success} rows for ${selectedUploadPillar}</div>`;
+        if (result.errors.length) html += `<div style="color:var(--red);margin-top:4px">${result.errors.join('<br>')}</div>`;
+        if (result.warnings.length) html += `<div style="color:var(--amber);margin-top:4px;font-size:10px">${result.warnings.slice(0, 5).join('<br>')}</div>`;
+        resultEl.innerHTML = html;
+        await Game.processDay();
+        await updateGameUI();
+      } catch (err) {
+        resultEl.innerHTML = `<div style="color:var(--red)">Error: ${err.message}</div>`;
+      }
+    }
+
+    async function loadSampleData() {
+      await Store.generateSampleData();
+      await Game.processDay();
+      await updateGameUI();
+      document.getElementById('upload-result').innerHTML = '<div style="color:var(--green)">✓ Loaded 90 days of sample data for Power, Water, and Waste! (saved to database)</div>';
+    }
+
+    // ── Chat ──
+    async function sendChat() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = '';
+
+      const msgs = document.getElementById('chat-messages');
+      msgs.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+
+      const { response, suggestions } = await NetZeroEngine.chat(msg);
+
+      let html = `<div class="chat-msg bot">${response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}`;
+      suggestions.forEach(s => {
+        html += `<div class="suggestion-card">
+      <div class="suggestion-title">${s.title}</div>
+      <div class="suggestion-solutions">${s.solutions.map(sol => `<div class="suggestion-solution">${sol.name} — ${sol.quantity}</div>`).join('')}</div>
+      <div class="suggestion-stats">
+        <div class="suggestion-stat"><div class="label">CAPEX</div><div class="value amber">₹${(s.totalCapex / 100000).toFixed(1)}L</div></div>
+        <div class="suggestion-stat"><div class="label">ANNUAL SAVINGS</div><div class="value">₹${(s.totalAnnualSaving / 100000).toFixed(1)}L</div></div>
+        <div class="suggestion-stat"><div class="label">PAYBACK</div><div class="value">${s.payback} yr</div></div>
+        <div class="suggestion-stat"><div class="label">CO₂ OFFSET</div><div class="value">${s.carbonOffset.toFixed(1)} t/yr</div></div>
+      </div>
+      <div class="suggestion-reasoning">${s.reasoning}</div>
+      <div class="suggestion-actions">
+        <button class="btn btn-primary" style="font-size:10px;padding:6px 14px" onclick="addSuggestionToRoadmap(this,'${encodeURIComponent(JSON.stringify(s))}')">⊕ Add to Roadmap</button>
+      </div>
+    </div>`;
+      });
+      html += '</div>';
+      msgs.innerHTML += html;
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    async function addSuggestionToRoadmap(btn, encoded) {
+      const s = JSON.parse(decodeURIComponent(encoded));
+      await NetZeroEngine.addToRoadmap(s);
+      btn.textContent = '✓ Added!';
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      await updateGameUI();
+    }
+
+    // ── Predictions ──
+    async function renderPredictions() {
+      const body = document.getElementById('predict-body');
+      body.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:40px">Generating predictions...</div>';
+      const warnings = await Predict.generateWarnings();
+      if (warnings.length === 0) {
+        body.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:40px">Need at least 7 days of data to generate predictions. Upload data or load sample data first.</div>';
+        return;
+      }
+      body.innerHTML = warnings.map(w => `
+    <div class="prediction-card">
+      <div class="prediction-header">
+        <div class="prediction-title">${w.title}</div>
+        <div class="prediction-severity ${w.severity}">${w.severity.toUpperCase()}</div>
+      </div>
+      <div class="prediction-msg">${w.message}</div>
+      <div class="prediction-actions">
+        ${w.actions.includes('accept') ? '<button class="btn btn-primary" style="font-size:10px;padding:6px 14px" onclick="this.textContent=\'✓ Accepted\';this.disabled=true;this.style.opacity=0.5">Accept Recommendation</button>' : ''}
+        ${w.actions.includes('reject') ? '<button class="btn btn-ghost" style="font-size:10px;padding:6px 14px" onclick="this.textContent=\'Dismissed\';this.disabled=true">Dismiss</button>' : ''}
+        ${w.actions.includes('acknowledge') ? '<button class="btn btn-ghost" style="font-size:10px;padding:6px 14px" onclick="this.textContent=\'✓ Noted\';this.disabled=true">Acknowledge</button>' : ''}
+      </div>
+    </div>
+  `).join('');
+    }
+
+    // ── CBA ──
+    async function renderCBA() {
+      const body = document.getElementById('cba-body');
+      const cba = await CBA.generateDefaultCBA();
+      body.innerHTML = `
+    <div style="margin-bottom:20px;font-size:12px;color:var(--text-muted)">Auto-generated cost-benefit analysis based on your campus data and recommended interventions.</div>
+    <table class="cba-table">
+      <thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Annual Saving</th></tr></thead>
+      <tbody>${cba.items.map(i => `<tr><td style="color:var(--text)">${i.name}</td><td>${i.category}</td><td>${i.quantity}</td><td>${i.unitCost}</td><td style="color:var(--amber)">${i.totalCost}</td><td>${i.annualSaving}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="cba-summary-grid">
+      <div class="cba-summary-item"><div class="label">TOTAL CAPEX</div><div class="value amber">${cba.summary.totalCapex}</div></div>
+      <div class="cba-summary-item"><div class="label">ANNUAL SAVINGS</div><div class="value">${cba.summary.annualSaving}</div></div>
+      <div class="cba-summary-item"><div class="label">PAYBACK</div><div class="value">${cba.summary.paybackPeriod}</div></div>
+      <div class="cba-summary-item"><div class="label">CO₂ OFFSET</div><div class="value">${cba.summary.totalCarbonOffset}</div></div>
+      <div class="cba-summary-item"><div class="label">CARBON CREDITS</div><div class="value">${cba.summary.carbonCreditRevenue}</div></div>
+      <div class="cba-summary-item"><div class="label">25-YEAR ROI</div><div class="value">${cba.summary.roi25year}</div></div>
+    </div>
+  `;
+    }
+
+    // ── Roadmap ──
+    async function renderRoadmap() {
+      const body = document.getElementById('roadmap-body');
+      const items = await Store.getRoadmap();
+      if (items.length === 0) {
+        body.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:40px">No roadmap items yet. Use the Net-Zero AI chatbot to get suggestions and add them here.</div>';
+        return;
+      }
+      body.innerHTML = '<div class="roadmap-items">' + items.map(item => `
+    <div class="roadmap-item">
+      <div class="roadmap-status ${item.completed ? 'completed' : ''}">
+        ${item.completed ? '✓' : '○'}
+      </div>
+      <div class="roadmap-info">
+        <div class="roadmap-title">${item.title}</div>
+        <div class="roadmap-detail">${item.solutions ? item.solutions.map(s => s.name).join(' + ') : ''}</div>
+        <div class="roadmap-detail" style="margin-top:4px">Payback: ${item.payback || 'N/A'} yr · CO₂: ${item.carbonOffset || '?'} t/yr</div>
+      </div>
+      <div class="roadmap-cost">₹${item.totalCapex ? (item.totalCapex / 100000).toFixed(1) + 'L' : 'N/A'}</div>
+    </div>
+  `).join('') + '</div>';
+    }
+
+    // ── Alert History ──
+    async function renderAlertHistory() {
+      const body = document.getElementById('alerts-body');
+      const alerts = await Store.getAlerts();
+      if (alerts.length === 0) {
+        body.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:40px">No alerts yet. Alerts will appear as sensor thresholds are triggered.</div>';
+        return;
+      }
+      body.innerHTML = alerts.slice(0, 20).map(a => `
+    <div style="padding:12px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;opacity:${a.read ? 0.5 : 1}">
+      <div style="font-size:18px">${a.icon || '🔔'}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--text);margin-bottom:2px">${a.title}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${a.msg}</div>
+        <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${new Date(a.time).toLocaleString()}</div>
+      </div>
+    </div>
+  `).join('');
+    }
+
+    // ── Init ──
+    initApp();
+  </script>
+</body>
+
+</html>

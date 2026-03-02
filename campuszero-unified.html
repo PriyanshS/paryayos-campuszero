@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampusZero — Net-Zero Energy Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+  --bg: #060d0a;
+  --surface: #0d1a14;
+  --surface2: #122019;
+  --border: #1e3329;
+  --green: #2aff7a;
+  --green-dim: #1a9e4d;
+  --green-glow: rgba(42,255,122,0.12);
+  --amber: #f5a623;
+  --amber-dim: rgba(245,166,35,0.15);
+  --red: #ff4d4d;
+  --red-dim: rgba(255,77,77,0.1);
+  --blue: #4db8ff;
+  --blue-dim: rgba(77,184,255,0.1);
+  --purple: #b97fff;
+  --purple-dim: rgba(185,127,255,0.1);
+  --teal: #2affee;
+  --teal-dim: rgba(42,255,238,0.1);
+  --text: #e8f5ee;
+  --text-muted: #6b9478;
+  --text-dim: #3a5544;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(42,255,122,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(77,184,255,0.03) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(42,255,122,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42,255,122,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+
+.wrapper { position: relative; z-index: 1; }
+
+/* ═══════════════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════════════ */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(6,13,10,0.92);
+  backdrop-filter: blur(14px);
+  position: sticky; top: 0; z-index: 200;
+  height: 56px;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+  letter-spacing: -0.5px; color: var(--green);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+
+.logo-dot {
+  width: 8px; height: 8px; background: var(--green); border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(42,255,122,0.4); }
+  50% { opacity:.7; box-shadow: 0 0 0 6px rgba(42,255,122,0); }
+}
+
+/* ── PAGE NAV LINKS ── */
+.nav-pages {
+  display: flex; align-items: stretch; gap: 0;
+  height: 100%;
+}
+
+.nav-page-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 18px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--text-muted);
+  background: transparent; border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer; white-space: nowrap;
+  transition: color .2s, border-color .2s;
+}
+
+.nav-page-btn:hover { color: var(--text); }
+.nav-page-btn.active { color: var(--green); border-bottom-color: var(--green); }
+.nav-page-btn .np-icon { font-size: 13px; }
+
+.nav-right {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 11px; flex-shrink: 0;
+}
+
+.nav-pill {
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px;
+  font-size: 10px; color: var(--text-dim); background: var(--surface);
+}
+
+.nav-clock { font-size: 11px; color: var(--text-muted); }
+.nav-clock span { color: var(--green); }
+
+/* ═══════════════════════════════════════════════════════
+   PAGE SYSTEM
+═══════════════════════════════════════════════════════ */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ═══════════════════════════════════════════════════════
+   SHARED LAYOUT HELPERS
+═══════════════════════════════════════════════════════ */
+.section {
+  max-width: 1280px; margin: 0 auto; padding: 0 32px 80px;
+}
+
+.section-header {
+  display: flex; align-items: baseline; gap: 16px; margin-bottom: 32px;
+}
+
+.section-num {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 48px; color: var(--text-dim); line-height: 1;
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 22px; color: var(--text);
+}
+.section-title span { color: var(--green); }
+
+/* ═══════════════════════════════════════════════════════
+   PAGE 1 — OVERVIEW
+═══════════════════════════════════════════════════════ */
+
+/* HERO */
+.hero {
+  padding: 80px 32px 60px;
+  max-width: 1280px; margin: 0 auto;
+}
+.hero-eyebrow {
+  font-size: 11px; color: var(--green-dim);
+  letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: clamp(36px,6vw,72px); line-height: 1.0;
+  letter-spacing: -2px; color: var(--text); margin-bottom: 8px;
+}
+.hero h1 span {
+  color: var(--green); font-family: 'Instrument Serif', serif;
+  font-style: italic; font-weight: 400;
+}
+.hero-sub {
+  font-size: 14px; color: var(--text-muted); max-width: 480px;
+  line-height: 1.7; margin-top: 20px; margin-bottom: 40px;
+}
+.hero-metrics { display: flex; gap: 32px; flex-wrap: wrap; }
+.hero-metric { display: flex; flex-direction: column; gap: 4px; }
+.hero-metric .val {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 28px; color: var(--green);
+}
+.hero-metric .val.amber { color: var(--amber); }
+.hero-metric .val.blue  { color: var(--blue); }
+.hero-metric .lbl {
+  font-size: 10px; color: var(--text-muted);
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.vdivider { width:1px; height:40px; background:var(--border); align-self:center; }
+
+/* WORKFLOW */
+.workflow {
+  display: grid; grid-template-columns: repeat(5,1fr);
+  gap: 0; position: relative; margin-bottom: 60px;
+}
+.workflow::before {
+  content: ''; position: absolute; top: 36px; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--green-dim), var(--green-dim), var(--green-dim), transparent);
+  z-index: 0;
+}
+.step {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 0 12px; position: relative; z-index: 1;
+}
+.step-icon {
+  width: 72px; height: 72px; border: 1px solid var(--green-dim);
+  border-radius: 8px; background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-bottom: 16px; position: relative; transition: all .3s;
+}
+.step-icon::after {
+  content: ''; position: absolute; inset: -1px; border-radius: 8px;
+  background: var(--green-glow); opacity: 0; transition: opacity .3s;
+}
+.step:hover .step-icon { border-color: var(--green); box-shadow: 0 0 20px rgba(42,255,122,.2); }
+.step:hover .step-icon::after { opacity: 1; }
+.step-label { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--text); margin-bottom:6px; }
+.step-desc  { font-size:11px; color:var(--text-muted); line-height:1.6; }
+
+/* PILLARS */
+.pillars { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 60px; }
+.pillar {
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px; background: var(--surface); position: relative; overflow: hidden;
+}
+.pillar::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; }
+.pillar.energy::before { background: linear-gradient(90deg,var(--green),transparent); }
+.pillar.carbon::before { background: linear-gradient(90deg,var(--blue),transparent); }
+.pillar.cost::before   { background: linear-gradient(90deg,var(--amber),transparent); }
+.pillar-icon { font-size:24px; margin-bottom:12px; }
+.pillar-title { font-family:'Syne',sans-serif; font-weight:700; font-size:14px; margin-bottom:8px; color:var(--text); }
+.pillar-metrics { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+.metric-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--border);
+}
+.metric-row:last-child { border-bottom:none; }
+.metric-name { font-size:11px; color:var(--text-muted); }
+.metric-val  { font-family:'Syne',sans-serif; font-weight:600; font-size:13px; }
+.metric-val.green { color:var(--green); }
+.metric-val.amber { color:var(--amber); }
+.metric-val.blue  { color:var(--blue); }
+.bar-wrap { height:3px; background:var(--border); border-radius:2px; margin-top:4px; overflow:hidden; }
+.bar-fill  { height:100%; border-radius:2px; background:var(--green); animation:barGrow 1.5s ease forwards; }
+.bar-fill.amber { background:var(--amber); }
+.bar-fill.blue  { background:var(--blue); }
+@keyframes barGrow { from { width:0; } }
+
+/* TWIN MAP */
+.twin-section { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:60px; }
+.campus-map {
+  border:1px solid var(--border); border-radius:12px; background:var(--surface);
+  padding:24px; position:relative; overflow:hidden; min-height:360px;
+}
+.campus-map-title {
+  font-family:'Syne',sans-serif; font-weight:700; font-size:13px;
+  color:var(--text-muted); margin-bottom:20px;
+  display:flex; align-items:center; gap:8px;
+}
+.live-dot {
+  width:6px; height:6px; background:var(--green); border-radius:50%;
+  animation:pulse 1.5s ease infinite;
+}
+.map-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr); gap:8px; height:280px;
+}
+.building {
+  border:1px solid var(--border); border-radius:6px;
+  background:var(--surface2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; font-size:9px; color:var(--text-dim); cursor:pointer;
+  transition:all .2s; position:relative; overflow:hidden;
+}
+.building:hover { border-color:var(--green-dim); color:var(--text-muted); background:var(--surface); }
+.building.active { border-color:var(--green); background:var(--green-glow); color:var(--green); }
+.building.alert  { border-color:var(--amber); background:var(--amber-dim); color:var(--amber); }
+.building-icon { font-size:18px; }
+.building.span2 { grid-column:span 2; }
+.building.tall  { grid-row:span 2; }
+.sensor-dot {
+  position:absolute; top:4px; right:4px; width:5px; height:5px;
+  border-radius:50%; background:var(--green); animation:pulse 2s ease infinite;
+}
+.sensor-dot.amber { background:var(--amber); }
+
+/* HARDWARE PANEL */
+.hardware-panel {
+  border:1px solid var(--border); border-radius:12px; background:var(--surface);
+  padding:24px; display:flex; flex-direction:column;
+}
+.panel-title {
+  font-family:'Syne',sans-serif; font-weight:700; font-size:13px;
+  color:var(--text-muted); margin-bottom:20px;
+}
+.hw-item {
+  display:flex; align-items:center; gap:14px;
+  padding:12px 0; border-bottom:1px solid var(--border);
+  cursor:pointer; transition:all .2s;
+}
+.hw-item:last-child { border-bottom:none; }
+.hw-item:hover { background:var(--green-glow); margin:0 -24px; padding:12px 24px; }
+.hw-icon {
+  width:36px; height:36px; border-radius:6px; background:var(--surface2);
+  border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.hw-info { flex:1; }
+.hw-name   { font-weight:500; font-size:12px; color:var(--text); margin-bottom:2px; }
+.hw-status { font-size:10px; color:var(--text-muted); }
+.hw-badge { padding:3px 8px; border-radius:4px; font-size:10px; font-weight:500; border:1px solid; }
+.hw-badge.online  { color:var(--green); border-color:var(--green-dim); background:var(--green-glow); }
+.hw-badge.pending { color:var(--amber); border-color:rgba(245,166,35,.4); background:rgba(245,166,35,.08); }
+.hw-badge.offline { color:var(--red);   border-color:rgba(255,77,77,.3);  background:rgba(255,77,77,.06); }
+
+/* CBA CARD */
+.cba-card {
+  border:1px solid var(--amber); border-radius:12px;
+  background:linear-gradient(135deg,rgba(245,166,35,.06) 0%,var(--surface) 60%);
+  padding:28px; margin-bottom:60px; position:relative; overflow:hidden;
+}
+.cba-card::before {
+  content:'AI GENERATED'; position:absolute; top:16px; right:20px;
+  font-size:9px; letter-spacing:2px; color:var(--amber); opacity:.6;
+}
+.cba-header { display:flex; align-items:flex-start; gap:20px; margin-bottom:24px; }
+.cba-icon { font-size:32px; }
+.cba-title { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:var(--text); margin-bottom:4px; }
+.cba-sub   { font-size:11px; color:var(--text-muted); }
+.cba-grid  { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.cba-metric { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.cba-metric .label { font-size:10px; color:var(--text-muted); margin-bottom:8px; }
+.cba-metric .value { font-family:'Syne',sans-serif; font-weight:700; font-size:20px; color:var(--green); }
+.cba-metric .value.amber { color:var(--amber); }
+.cba-metric .change { font-size:10px; color:var(--text-muted); margin-top:4px; }
+.cba-actions { display:flex; gap:12px; align-items:center; }
+.btn { padding:10px 22px; border-radius:6px; font-family:'DM Mono',monospace; font-size:12px; font-weight:500; cursor:pointer; transition:all .2s; border:1px solid; }
+.btn-primary { background:var(--green); color:var(--bg); border-color:var(--green); }
+.btn-primary:hover { background:#3dffa0; box-shadow:0 0 20px rgba(42,255,122,.3); }
+.btn-ghost  { background:transparent; color:var(--text-muted); border-color:var(--border); }
+.btn-ghost:hover { border-color:var(--text-muted); color:var(--text); }
+.btn-danger { background:transparent; color:var(--red); border-color:rgba(255,77,77,.3); }
+.cba-note { font-size:11px; color:var(--text-dim); margin-left:auto; font-style:italic; }
+
+/* CARBON CREDITS */
+.credits-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:60px; }
+.credit-card { border:1px solid var(--border); border-radius:12px; background:var(--surface); padding:24px; }
+.credit-title { font-family:'Syne',sans-serif; font-weight:700; font-size:14px; margin-bottom:20px; color:var(--text); display:flex; align-items:center; gap:8px; }
+.credit-title .icon { font-size:18px; }
+.carbon-bar-section { margin-bottom:14px; }
+.carbon-label { display:flex; justify-content:space-between; margin-bottom:6px; font-size:11px; }
+.carbon-label span:first-child { color:var(--text-muted); }
+.carbon-label span:last-child  { color:var(--text); font-weight:500; }
+.carbon-bar  { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.carbon-fill { height:100%; border-radius:3px; animation:barGrow 1.8s ease forwards; }
+.credit-summary {
+  margin-top:20px; padding:16px; background:var(--surface2);
+  border-radius:8px; border:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.credit-summary .label { font-size:11px; color:var(--text-muted); }
+.credit-summary .val   { font-family:'Syne',sans-serif; font-weight:700; font-size:22px; color:var(--green); }
+.verify-steps { display:flex; flex-direction:column; gap:12px; }
+.vstep { display:flex; gap:14px; align-items:flex-start; }
+.vstep-num {
+  width:24px; height:24px; border-radius:50%; border:1px solid var(--green-dim);
+  color:var(--green); font-size:10px; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; font-weight:600;
+}
+.vstep-content .title { font-size:12px; color:var(--text); margin-bottom:2px; }
+.vstep-content .desc  { font-size:11px; color:var(--text-muted); line-height:1.5; }
+
+/* HARDWARE LIFECYCLE */
+.lifecycle {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:60px;
+  border:1px solid var(--border); border-radius:12px; overflow:hidden;
+}
+.lc-step { padding:24px; border-right:1px solid var(--border); }
+.lc-step:last-child { border-right:none; }
+.lc-num   { font-family:'Syne',sans-serif; font-weight:800; font-size:32px; color:var(--text-dim); line-height:1; margin-bottom:12px; }
+.lc-title { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; color:var(--text); margin-bottom:6px; }
+.lc-desc  { font-size:11px; color:var(--text-muted); line-height:1.6; }
+.lc-step:hover { background:var(--surface); }
+.lc-icon  { font-size:24px; margin-bottom:10px; }
+
+/* ROADMAP */
+.roadmap { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:60px; }
+.phase { display:grid; grid-template-columns:140px 1fr; border-bottom:1px solid var(--border); }
+.phase:last-child { border-bottom:none; }
+.phase-label { padding:20px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:4px; background:var(--surface2); }
+.phase-num  { font-family:'Syne',sans-serif; font-weight:800; font-size:10px; color:var(--text-dim); letter-spacing:2px; }
+.phase-time { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; color:var(--text); }
+.phase-tag  { font-size:9px; padding:2px 6px; border-radius:3px; width:fit-content; margin-top:4px; }
+.phase-tag.foundation { background:rgba(42,255,122,.1);  color:var(--green); }
+.phase-tag.scale      { background:rgba(77,184,255,.1);  color:var(--blue); }
+.phase-tag.optimize   { background:rgba(245,166,35,.1);  color:var(--amber); }
+.phase-tag.achieve    { background:linear-gradient(90deg,rgba(42,255,122,.15),rgba(77,184,255,.15)); color:var(--green); }
+.phase-content { padding:20px 24px; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start; }
+.phase-item { padding:4px 10px; border:1px solid var(--border); border-radius:4px; font-size:11px; color:var(--text-muted); background:var(--surface); }
+
+/* ═══════════════════════════════════════════════════════
+   PAGE 2 — KPI MONITOR
+═══════════════════════════════════════════════════════ */
+
+/* KPI PAGE HEADER */
+.kpi-page-header {
+  max-width: 1280px; margin: 0 auto;
+  padding: 52px 32px 36px;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  flex-wrap: wrap; gap: 24px;
+}
+.kpi-eyebrow { font-size:10px; letter-spacing:3px; color:var(--green-dim); text-transform:uppercase; margin-bottom:12px; }
+.kpi-page-title {
+  font-family:'Syne',sans-serif; font-weight:800;
+  font-size:clamp(28px,4vw,48px); line-height:1.05; letter-spacing:-1.5px; color:var(--text);
+}
+.kpi-page-title em { font-family:'Instrument Serif',serif; font-style:italic; color:var(--green); font-weight:400; }
+.kpi-page-sub { font-size:12px; color:var(--text-muted); margin-top:10px; line-height:1.7; max-width:480px; }
+
+/* summary chips */
+.summary-chips { display:flex; gap:10px; flex-wrap:wrap; }
+.chip { display:flex; flex-direction:column; gap:2px; padding:10px 16px; border-radius:8px; border:1px solid; min-width:110px; }
+.chip .cv { font-family:'Syne',sans-serif; font-weight:700; font-size:18px; }
+.chip .cl { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; opacity:.7; }
+.chip.green  { border-color:var(--green-dim);        background:var(--green-glow); color:var(--green); }
+.chip.amber  { border-color:rgba(245,166,35,.3);     background:var(--amber-dim);  color:var(--amber); }
+.chip.red    { border-color:rgba(255,77,77,.3);      background:var(--red-dim);    color:var(--red); }
+.chip.blue   { border-color:rgba(77,184,255,.3);     background:var(--blue-dim);   color:var(--blue); }
+
+/* PILLAR TABS */
+.kpi-tabs-bar {
+  max-width:1280px; margin:0 auto; padding:0 32px;
+  display:flex; gap:0; border-bottom:1px solid var(--border); overflow-x:auto;
+}
+.kpi-tab {
+  padding:12px 22px; font-size:11px; font-family:'DM Mono',monospace;
+  border:none; background:transparent; color:var(--text-muted);
+  cursor:pointer; border-bottom:2px solid transparent;
+  white-space:nowrap; transition:all .2s;
+  display:flex; align-items:center; gap:8px;
+}
+.kpi-tab.active { color:var(--text); border-bottom-color:var(--green); }
+.kpi-tab:hover:not(.active) { color:var(--text-muted); background:rgba(255,255,255,.02); }
+.kpi-tab-count {
+  font-size:9px; padding:1px 6px; border-radius:10px;
+  background:var(--surface2); border:1px solid var(--border);
+}
+.kpi-tab.active .kpi-tab-count { background:var(--green-glow); border-color:var(--green-dim); color:var(--green); }
+
+/* KPI BODY */
+.kpi-body { max-width:1280px; margin:0 auto; padding:32px 32px 80px; }
+
+/* PILLAR SECTION */
+.pillar-section { margin-bottom:56px; }
+.pillar-section:last-child { margin-bottom:0; }
+.pillar-header {
+  display:flex; align-items:center; gap:16px;
+  margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);
+}
+.pillar-accent { width:4px; height:36px; border-radius:2px; flex-shrink:0; }
+.pillar-header-text { flex:1; }
+.pillar-name { font-family:'Syne',sans-serif; font-weight:800; font-size:16px; color:var(--text); display:flex; align-items:center; gap:10px; }
+.pillar-desc { font-size:11px; color:var(--text-muted); margin-top:3px; }
+.pillar-score-label { font-size:10px; color:var(--text-muted); text-align:right; }
+.pillar-score { font-family:'Syne',sans-serif; font-weight:800; font-size:28px; text-align:right; line-height:1; }
+
+/* KPI GRID */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+
+/* KPI CARD */
+.kpi-card {
+  border:1px solid var(--border); border-radius:10px; background:var(--surface);
+  padding:20px; position:relative; overflow:hidden;
+  transition:border-color .25s, box-shadow .25s; cursor:default;
+  opacity:0; transform:translateY(12px); animation:cardIn .45s ease forwards;
+}
+@keyframes cardIn { to { opacity:1; transform:translateY(0); } }
+.kpi-card:hover { border-color:#2a4033; box-shadow:0 0 28px rgba(42,255,122,.05); }
+.kpi-card::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; }
+.kpi-card.status-on-track::before { background:linear-gradient(90deg,var(--green),transparent); }
+.kpi-card.status-warning::before  { background:linear-gradient(90deg,var(--amber),transparent); }
+.kpi-card.status-critical::before { background:linear-gradient(90deg,var(--red),transparent); }
+.kpi-card.status-info::before     { background:linear-gradient(90deg,var(--blue),transparent); }
+
+.kpi-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.kpi-name { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; color:var(--text); line-height:1.3; max-width:180px; }
+.kpi-name small { display:block; font-family:'DM Mono',monospace; font-weight:400; font-size:10px; color:var(--text-muted); margin-top:3px; letter-spacing:.5px; }
+
+.status-badge { padding:3px 9px; border-radius:4px; font-size:9px; font-weight:500; letter-spacing:1px; border:1px solid; flex-shrink:0; }
+.status-badge.on-track { color:var(--green); border-color:var(--green-dim);        background:var(--green-glow); }
+.status-badge.warning  { color:var(--amber); border-color:rgba(245,166,35,.35);    background:var(--amber-dim); }
+.status-badge.critical { color:var(--red);   border-color:rgba(255,77,77,.3);      background:var(--red-dim); }
+.status-badge.info     { color:var(--blue);  border-color:rgba(77,184,255,.3);     background:var(--blue-dim); }
+
+.kpi-value-row { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.kpi-val  { font-family:'Syne',sans-serif; font-weight:800; font-size:32px; line-height:1; }
+.kpi-unit { font-size:11px; color:var(--text-muted); }
+.kpi-delta { font-size:11px; padding:1px 6px; border-radius:4px; margin-left:auto; }
+.kpi-delta.pos { color:var(--green); background:var(--green-glow); }
+.kpi-delta.neg { color:var(--red);   background:var(--red-dim); }
+.kpi-delta.neu { color:var(--amber); background:var(--amber-dim); }
+
+.kpi-target-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:10px; }
+.kpi-target-label { color:var(--text-dim); }
+.kpi-target-val   { color:var(--text-muted); font-weight:500; }
+
+.kpi-bar-wrap { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:14px; }
+.kpi-bar-fill { height:100%; border-radius:3px; animation:growBar 1.4s ease forwards; }
+@keyframes growBar { from { width:0 !important; } }
+.kpi-bar-fill.green  { background:var(--green); }
+.kpi-bar-fill.amber  { background:var(--amber); }
+.kpi-bar-fill.red    { background:var(--red); }
+.kpi-bar-fill.blue   { background:var(--blue); }
+
+.kpi-sparkline-svg { width:100%; height:36px; margin-bottom:10px; overflow:visible; }
+.kpi-def { font-size:10px; color:var(--text-dim); line-height:1.55; padding-top:12px; border-top:1px solid var(--border); }
+
+/* ═══════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════ */
+footer {
+  border-top:1px solid var(--border); padding:20px 32px;
+  display:flex; justify-content:space-between; align-items:center;
+  color:var(--text-dim); font-size:10px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .workflow { grid-template-columns: 1fr 1fr; }
+  .workflow::before { display:none; }
+  .pillars { grid-template-columns: 1fr; }
+  .twin-section { grid-template-columns: 1fr; }
+  .cba-grid { grid-template-columns: 1fr 1fr; }
+  .lifecycle { grid-template-columns: 1fr 1fr; }
+  .credits-grid { grid-template-columns: 1fr; }
+  .phase { grid-template-columns: 1fr; }
+  .phase-label { border-right:none; border-bottom:1px solid var(--border); }
+  .kpi-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 16px; }
+  .nav-pages { overflow-x: auto; }
+  .nav-page-btn { padding: 0 12px; font-size: 10px; }
+}
+
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- ═══════════════════════════════════════════════════
+     NAVBAR
+═══════════════════════════════════════════════════ -->
+<nav>
+  <div class="logo"><div class="logo-dot"></div>CampusZero</div>
+
+  <div class="nav-pages">
+    <button class="nav-page-btn active" data-page="overview">
+      <span class="np-icon">🏛️</span> Platform Overview
+    </button>
+    <button class="nav-page-btn" data-page="kpi">
+      <span class="np-icon">📊</span> KPI Monitor
+    </button>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-pill">847 SENSORS</div>
+    <div class="nav-clock">SYNC <span id="clockDisplay">--:--:--</span></div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: OVERVIEW
+═══════════════════════════════════════════════════ -->
+<div class="page active" id="page-overview">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">NET-ZERO ENERGY CAMPUS PLATFORM</div>
+    <h1>Transform your campus<br>into a <span>living grid.</span></h1>
+    <p class="hero-sub">A digital twin–first approach to net-zero: monitor every watt, simulate every upgrade, automate every decision — from solar panels to carbon credits.</p>
+    <div class="hero-metrics">
+      <div class="hero-metric">
+        <div class="val" id="heroRE">68.0%</div>
+        <div class="lbl">Renewable Share</div>
+      </div>
+      <div class="vdivider"></div>
+      <div class="hero-metric">
+        <div class="val amber">1,240</div>
+        <div class="lbl">tCO₂e Avoided</div>
+      </div>
+      <div class="vdivider"></div>
+      <div class="hero-metric">
+        <div class="val blue">₹48.2L</div>
+        <div class="lbl">Energy Cost Saved</div>
+      </div>
+      <div class="vdivider"></div>
+      <div class="hero-metric">
+        <div class="val">3.2yr</div>
+        <div class="lbl">Avg. Payback Period</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 01 CORE LOOP -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">The <span>Core Loop</span></div>
+    </div>
+    <div class="workflow">
+      <div class="step">
+        <div class="step-icon">🏛️</div>
+        <div class="step-label">Build the Twin</div>
+        <div class="step-desc">Map every building, asset, and energy node into the digital twin — the single source of truth for your campus.</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">📡</div>
+        <div class="step-label">Monitor 3 Pillars</div>
+        <div class="step-desc">Real-time data streams across Energy, Carbon, and Cost — surfaced via IoT sensors and utility integrations.</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🤖</div>
+        <div class="step-label">AI Analysis</div>
+        <div class="step-desc">The system detects anomalies, predicts consumption, and auto-generates hardware recommendations.</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">⚡</div>
+        <div class="step-label">Simulate & Decide</div>
+        <div class="step-desc">Add or remove hardware in the twin first. The AI runs a full CBA. You choose to implement or not.</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔗</div>
+        <div class="step-label">Deploy & Sync</div>
+        <div class="step-desc">Physical hardware installed matches the twin. Once connected to the server, the loop closes automatically.</div>
+      </div>
+    </div>
+
+    <!-- 02 THREE PILLARS -->
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">The Three <span>Monitoring Pillars</span></div>
+    </div>
+    <div class="pillars">
+      <div class="pillar energy">
+        <div class="pillar-icon">⚡</div>
+        <div class="pillar-title">Energy</div>
+        <div style="font-size:11px;color:var(--text-muted)">Real-time generation, consumption, and grid interaction across all campus zones.</div>
+        <div class="pillar-metrics">
+          <div class="metric-row"><span class="metric-name">Solar Generation</span><span class="metric-val green">482 kW</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:78%"></div></div>
+          <div class="metric-row"><span class="metric-name">Total Consumption</span><span class="metric-val green">618 kW</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div>
+          <div class="metric-row"><span class="metric-name">Grid Export</span><span class="metric-val green">+64 kW</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:24%"></div></div>
+          <div class="metric-row"><span class="metric-name">Battery State of Charge</span><span class="metric-val green">74%</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:74%"></div></div>
+          <div class="metric-row"><span class="metric-name">Peak Demand</span><span class="metric-val amber">840 kW</span></div>
+          <div class="bar-wrap"><div class="bar-fill amber" style="width:62%"></div></div>
+        </div>
+      </div>
+      <div class="pillar carbon">
+        <div class="pillar-icon">🌿</div>
+        <div class="pillar-title">Carbon</div>
+        <div style="font-size:11px;color:var(--text-muted)">Scope 1, 2, and 3 emissions tracking aligned to GHG Protocol standards.</div>
+        <div class="pillar-metrics">
+          <div class="metric-row"><span class="metric-name">Scope 1 (Direct)</span><span class="metric-val blue">142 tCO₂e</span></div>
+          <div class="bar-wrap"><div class="bar-fill blue" style="width:30%"></div></div>
+          <div class="metric-row"><span class="metric-name">Scope 2 (Grid Energy)</span><span class="metric-val blue">318 tCO₂e</span></div>
+          <div class="bar-wrap"><div class="bar-fill blue" style="width:65%"></div></div>
+          <div class="metric-row"><span class="metric-name">Carbon Intensity</span><span class="metric-val blue">0.42 kg/kWh</span></div>
+          <div class="bar-wrap"><div class="bar-fill blue" style="width:42%"></div></div>
+          <div class="metric-row"><span class="metric-name">Avoidance YTD</span><span class="metric-val blue">1,240 t</span></div>
+          <div class="bar-wrap"><div class="bar-fill blue" style="width:88%"></div></div>
+          <div class="metric-row"><span class="metric-name">Net-Zero Gap</span><span class="metric-val amber">460 tCO₂e</span></div>
+          <div class="bar-wrap"><div class="bar-fill amber" style="width:37%"></div></div>
+        </div>
+      </div>
+      <div class="pillar cost">
+        <div class="pillar-icon">💰</div>
+        <div class="pillar-title">Cost</div>
+        <div style="font-size:11px;color:var(--text-muted)">Full financial picture: utility bills, O&M costs, renewable savings, and credit revenues.</div>
+        <div class="pillar-metrics">
+          <div class="metric-row"><span class="metric-name">Utility Bill (Monthly)</span><span class="metric-val amber">₹3.8L</span></div>
+          <div class="bar-wrap"><div class="bar-fill amber" style="width:55%"></div></div>
+          <div class="metric-row"><span class="metric-name">Solar Savings YTD</span><span class="metric-val green">₹48.2L</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:72%"></div></div>
+          <div class="metric-row"><span class="metric-name">Carbon Credit Revenue</span><span class="metric-val green">₹6.2L</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:28%"></div></div>
+          <div class="metric-row"><span class="metric-name">Total Capex Deployed</span><span class="metric-val amber">₹2.4Cr</span></div>
+          <div class="bar-wrap"><div class="bar-fill amber" style="width:48%"></div></div>
+          <div class="metric-row"><span class="metric-name">Avg. Payback Period</span><span class="metric-val green">3.2 yrs</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:82%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 DIGITAL TWIN -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">The <span>Digital Twin</span> & Hardware Registry</div>
+    </div>
+    <div class="twin-section">
+      <div class="campus-map">
+        <div class="campus-map-title"><div class="live-dot"></div>CAMPUS MAP — LIVE TWIN</div>
+        <div class="map-grid">
+          <div class="building span2 active"><div class="sensor-dot"></div><div class="building-icon">🌞</div><div>Solar Array A</div></div>
+          <div class="building alert"><div class="sensor-dot amber"></div><div class="building-icon">🏢</div><div>Admin Block</div></div>
+          <div class="building"><div class="sensor-dot"></div><div class="building-icon">🔬</div><div>Science Lab</div></div>
+          <div class="building tall active"><div class="sensor-dot"></div><div class="building-icon">🏫</div><div>Main Hall</div></div>
+          <div class="building"><div class="sensor-dot"></div><div class="building-icon">📚</div><div>Library</div></div>
+          <div class="building"><div class="sensor-dot amber"></div><div class="building-icon">🍽️</div><div>Cafeteria</div></div>
+          <div class="building active"><div class="sensor-dot"></div><div class="building-icon">🔋</div><div>BESS</div></div>
+          <div class="building"><div class="sensor-dot"></div><div class="building-icon">🏃</div><div>Sports</div></div>
+          <div class="building"><div class="sensor-dot"></div><div class="building-icon">🏠</div><div>Hostel A</div></div>
+          <div class="building"><div class="sensor-dot"></div><div class="building-icon">🏠</div><div>Hostel B</div></div>
+          <div class="building span2 active"><div class="sensor-dot"></div><div class="building-icon">🌬️</div><div>Wind Turbine Zone</div></div>
+          <div class="building alert"><div class="sensor-dot amber"></div><div class="building-icon">🅿️</div><div>EV Parking</div></div>
+          <div class="building"><div class="sensor-dot"></div><div class="building-icon">⚙️</div><div>Utilities</div></div>
+        </div>
+      </div>
+      <div class="hardware-panel">
+        <div class="panel-title">HARDWARE REGISTRY — PHYSICAL + TWIN</div>
+        <div class="hw-item"><div class="hw-icon">☀️</div><div class="hw-info"><div class="hw-name">Solar PV Array A — Roof Block 1</div><div class="hw-status">480 kWp · Connected to Server · 847 sensors synced</div></div><div class="hw-badge online">ONLINE</div></div>
+        <div class="hw-item"><div class="hw-icon">🔋</div><div class="hw-info"><div class="hw-name">Battery Energy Storage — BESS-01</div><div class="hw-status">500 kWh · Li-Ion · Grid-forming mode active</div></div><div class="hw-badge online">ONLINE</div></div>
+        <div class="hw-item"><div class="hw-icon">🌬️</div><div class="hw-info"><div class="hw-name">Small Wind Turbines × 3</div><div class="hw-status">15 kW each · Rooftop mount · SCADA linked</div></div><div class="hw-badge online">ONLINE</div></div>
+        <div class="hw-item"><div class="hw-icon">📡</div><div class="hw-info"><div class="hw-name">Smart Meters — Admin Block</div><div class="hw-status">⚠ Anomaly detected: +22% above baseline</div></div><div class="hw-badge pending">ALERT</div></div>
+        <div class="hw-item"><div class="hw-icon">🚗</div><div class="hw-info"><div class="hw-name">EV Charging Station Array</div><div class="hw-status">Added to Twin · Awaiting physical installation</div></div><div class="hw-badge pending">PENDING</div></div>
+        <div class="hw-item"><div class="hw-icon">☀️</div><div class="hw-info"><div class="hw-name">Solar PV Array B — Hostel Roof</div><div class="hw-status">Proposed in Twin · CBA generated · Pending approval</div></div><div class="hw-badge offline">PROPOSED</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 LIFECYCLE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title">Hardware <span>Lifecycle Flow</span></div>
+    </div>
+    <div class="lifecycle">
+      <div class="lc-step"><div class="lc-icon">🖥️</div><div class="lc-num">01</div><div class="lc-title">Add to Twin</div><div class="lc-desc">Drag a hardware node into the digital twin. Specify capacity, location, and type. The twin reflects the proposed state instantly.</div></div>
+      <div class="lc-step"><div class="lc-icon">🤖</div><div class="lc-num">02</div><div class="lc-title">AI Runs CBA</div><div class="lc-desc">The platform auto-calculates capital cost, projected savings, payback period, carbon offset, and credit revenue using live campus data.</div></div>
+      <div class="lc-step"><div class="lc-icon">✅</div><div class="lc-num">03</div><div class="lc-title">Approve & Install</div><div class="lc-desc">You decide. If approved, a work order is generated. Physical hardware is installed and registered with a unique device ID.</div></div>
+      <div class="lc-step"><div class="lc-icon">🔗</div><div class="lc-num">04</div><div class="lc-title">Sync to Server</div><div class="lc-desc">Physical device connects to the main server. Twin status flips PROPOSED → ONLINE. Data streams begin. Loop closes.</div></div>
+    </div>
+  </div>
+
+  <!-- 05 CBA ENGINE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">AI Cost-Benefit <span>Analysis Engine</span></div>
+    </div>
+    <div class="cba-card">
+      <div class="cba-header">
+        <div class="cba-icon">🤖</div>
+        <div>
+          <div class="cba-title">Recommendation: Install Solar PV Array B (200 kWp) — Hostel Roof</div>
+          <div class="cba-sub">Generated from 14 months of campus consumption data · Confidence: 94% · Last updated 2 min ago</div>
+        </div>
+      </div>
+      <div class="cba-grid">
+        <div class="cba-metric"><div class="label">ESTIMATED CAPEX</div><div class="value amber">₹78L</div><div class="change">Incl. installation & grid tie-in</div></div>
+        <div class="cba-metric"><div class="label">ANNUAL SAVINGS</div><div class="value">₹22.4L/yr</div><div class="change">Energy + reduced peak demand</div></div>
+        <div class="cba-metric"><div class="label">PAYBACK PERIOD</div><div class="value">3.5 years</div><div class="change">Accounting for inflation & tariff hike</div></div>
+        <div class="cba-metric"><div class="label">CARBON OFFSET</div><div class="value">182 tCO₂e/yr</div><div class="change">Based on local grid emission factor</div></div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:11px;color:var(--text-muted);line-height:1.7">
+        <span style="color:var(--amber);font-weight:500">AI RATIONALE:</span> Hostel rooftop has 2,400 m² of unutilized south-facing area with 5.8 peak sun hours/day. Current hostel consumption accounts for 28% of campus load, primarily between 18:00–23:00 — partially mitigable with battery dispatch from the proposed array. Combined with the existing BESS-01 capacity, daytime generation covers evening demand with 14% surplus available for grid export. Carbon credit eligibility: verified under VERRA VCS.
+      </div>
+      <div class="cba-actions">
+        <button class="btn btn-primary">✓ Approve & Create Work Order</button>
+        <button class="btn btn-ghost">⊕ Modify Parameters</button>
+        <button class="btn btn-danger">✕ Reject</button>
+        <div class="cba-note">Decision logged to audit trail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 CARBON CREDITS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title">Carbon Credit <span>Engine</span></div>
+    </div>
+    <div class="credits-grid">
+      <div class="credit-card">
+        <div class="credit-title"><span class="icon">📊</span> Emissions Accounting — Current Year</div>
+        <div class="carbon-bar-section"><div class="carbon-label"><span>Baseline (Pre-Renewable)</span><span>1,840 tCO₂e</span></div><div class="carbon-bar"><div class="carbon-fill" style="width:100%;background:var(--text-dim)"></div></div></div>
+        <div class="carbon-bar-section"><div class="carbon-label"><span>Actual Emissions (Current)</span><span>600 tCO₂e</span></div><div class="carbon-bar"><div class="carbon-fill" style="width:33%;background:var(--red)"></div></div></div>
+        <div class="carbon-bar-section"><div class="carbon-label"><span>Avoided via Solar + Wind</span><span>1,240 tCO₂e</span></div><div class="carbon-bar"><div class="carbon-fill" style="width:67%;background:var(--green)"></div></div></div>
+        <div class="carbon-bar-section"><div class="carbon-label"><span>Net-Zero Target Gap</span><span>460 tCO₂e remaining</span></div><div class="carbon-bar"><div class="carbon-fill" style="width:25%;background:var(--amber)"></div></div></div>
+        <div class="credit-summary">
+          <div><div class="label">ELIGIBLE CARBON CREDITS</div><div class="val">1,240 CERs</div></div>
+          <div style="text-align:right"><div class="label">EST. MARKET VALUE</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--amber)">₹6.2L</div></div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-title"><span class="icon">🏷️</span> Verification & Registry Flow</div>
+        <div class="verify-steps">
+          <div class="vstep"><div class="vstep-num">1</div><div class="vstep-content"><div class="title">Metered Data Aggregation</div><div class="desc">Smart meters and generation inverters log kWh data to the server in 15-min intervals. Tamper-evident via cryptographic hash.</div></div></div>
+          <div class="vstep"><div class="vstep-num">2</div><div class="vstep-content"><div class="title">Emission Factor Mapping</div><div class="desc">Platform applies regional grid emission factor (CEA India: 0.716 kgCO₂/kWh) to calculate tCO₂e avoided monthly.</div></div></div>
+          <div class="vstep"><div class="vstep-num">3</div><div class="vstep-content"><div class="title">Protocol Alignment</div><div class="desc">Reports auto-formatted to VERRA VCS, Gold Standard, or BEE-India protocol. Scope 1/2/3 classification is automatic.</div></div></div>
+          <div class="vstep"><div class="vstep-num">4</div><div class="vstep-content"><div class="title">Third-Party Verification Export</div><div class="desc">One-click export of MRV package for external auditor or registry submission.</div></div></div>
+          <div class="vstep"><div class="vstep-num">5</div><div class="vstep-content"><div class="title">Credit Issuance & Trading</div><div class="desc">Upon registry approval, issued CERs are tracked in-platform. Trade, retire, or bank toward institutional net-zero targets.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 ROADMAP -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title">Development <span>Roadmap</span></div>
+    </div>
+    <div class="roadmap">
+      <div class="phase">
+        <div class="phase-label"><div class="phase-num">PHASE 01</div><div class="phase-time">Months 1–4</div><div class="phase-tag foundation">Foundation</div></div>
+        <div class="phase-content"><div class="phase-item">Campus energy audit & baseline</div><div class="phase-item">IoT sensor deployment (smart meters, weather stations)</div><div class="phase-item">Digital twin MVP (building models + energy nodes)</div><div class="phase-item">Time-series database (InfluxDB / TimescaleDB)</div><div class="phase-item">Basic monitoring dashboard</div><div class="phase-item">3-pillar KPI schema design</div></div>
+      </div>
+      <div class="phase">
+        <div class="phase-label"><div class="phase-num">PHASE 02</div><div class="phase-time">Months 5–9</div><div class="phase-tag scale">Scale</div></div>
+        <div class="phase-content"><div class="phase-item">AI anomaly detection models</div><div class="phase-item">Hardware registry & lifecycle management</div><div class="phase-item">CBA engine v1 (rule-based + regression)</div><div class="phase-item">Solar + BESS integration (SCADA bridge)</div><div class="phase-item">Carbon accounting module</div><div class="phase-item">Mobile alert system</div><div class="phase-item">Approval workflow engine</div></div>
+      </div>
+      <div class="phase">
+        <div class="phase-label"><div class="phase-num">PHASE 03</div><div class="phase-time">Months 10–15</div><div class="phase-tag optimize">Optimize</div></div>
+        <div class="phase-content"><div class="phase-item">ML-based load forecasting</div><div class="phase-item">Digital twin simulation (what-if scenarios)</div><div class="phase-item">CBA engine v2 (ML-enhanced, sensitivity analysis)</div><div class="phase-item">Carbon credit MRV export module</div><div class="phase-item">VERRA / Gold Standard report generator</div><div class="phase-item">EV charging integration</div><div class="phase-item">Grid export / demand response automation</div></div>
+      </div>
+      <div class="phase">
+        <div class="phase-label"><div class="phase-num">PHASE 04</div><div class="phase-time">Months 16–24</div><div class="phase-tag achieve">Net-Zero</div></div>
+        <div class="phase-content"><div class="phase-item">Full Scope 1/2/3 net-zero dashboard</div><div class="phase-item">Carbon credit trading integration</div><div class="phase-item">Autonomous energy optimization (RL agent)</div><div class="phase-item">Multi-campus federation</div><div class="phase-item">NAAC / NIRF sustainability reporting export</div><div class="phase-item">Public-facing sustainability microsite</div><div class="phase-item">Digital twin API for third-party research</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>CampusZero · Net-Zero Energy Platform · Concept Overview v2.0</div>
+    <div style="display:flex;gap:20px">
+      <span>Digital Twin → Hardware → CBA → Carbon Credits → KPIs</span>
+      <span style="color:var(--green)">BUILD LATER: Backend · Sensors · Database · API</span>
+    </div>
+  </footer>
+
+</div><!-- /page-overview -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: KPI MONITOR
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-kpi">
+
+  <div class="kpi-page-header">
+    <div>
+      <div class="kpi-eyebrow">CAMPUS OS · SUSTAINABILITY</div>
+      <div class="kpi-page-title">KPI <em>Master Dashboard</em></div>
+      <div class="kpi-page-sub">Real-time performance against defined targets across Energy, Water, Waste, Financial, and AI pillars. All metrics are live-fed from campus sensors and the digital twin.</div>
+    </div>
+    <div class="summary-chips">
+      <div class="chip green"><div class="cv" id="chip-ontrack">—</div><div class="cl">On Track</div></div>
+      <div class="chip amber"><div class="cv" id="chip-warning">—</div><div class="cl">Warning</div></div>
+      <div class="chip red"><div class="cv" id="chip-critical">—</div><div class="cl">Critical</div></div>
+      <div class="chip blue"><div class="cv" id="chip-info">—</div><div class="cl">Info</div></div>
+    </div>
+  </div>
+
+  <div class="kpi-tabs-bar" id="kpiTabsBar">
+    <button class="kpi-tab active" data-pillar="all">🔭 All KPIs <span class="kpi-tab-count" id="cnt-all">0</span></button>
+    <button class="kpi-tab" data-pillar="energy">⚡ Energy <span class="kpi-tab-count">5</span></button>
+    <button class="kpi-tab" data-pillar="water">💧 Water <span class="kpi-tab-count">4</span></button>
+    <button class="kpi-tab" data-pillar="waste">♻️ Waste <span class="kpi-tab-count">4</span></button>
+    <button class="kpi-tab" data-pillar="financial">💰 Financial <span class="kpi-tab-count">4</span></button>
+    <button class="kpi-tab" data-pillar="ai">🤖 AI & Monitoring <span class="kpi-tab-count">3</span></button>
+  </div>
+
+  <div class="kpi-body" id="kpiBody"></div>
+
+  <footer>
+    <div>CampusZero · KPI Monitor · Live Data View</div>
+    <div style="display:flex;gap:20px">
+      <span>20 KPIs across 5 Pillars</span>
+      <span style="color:var(--green)">Updates every 8 seconds</span>
+    </div>
+  </footer>
+
+</div><!-- /page-kpi -->
+
+</div><!-- /wrapper -->
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   PAGE NAVIGATION
+═══════════════════════════════════════════════════════ */
+document.querySelectorAll('.nav-page-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-page-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+/* ═══════════════════════════════════════════════════════
+   LIVE CLOCK
+═══════════════════════════════════════════════════════ */
+function updateClock() {
+  document.getElementById('clockDisplay').textContent =
+    new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ═══════════════════════════════════════════════════════
+   OVERVIEW — bar animations on scroll
+═══════════════════════════════════════════════════════ */
+const barObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.style.animationPlayState = 'running'; });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.bar-fill, .carbon-fill').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  barObserver.observe(el);
+});
+
+document.querySelectorAll('.building').forEach(b => {
+  b.addEventListener('click', () => b.classList.toggle('active'));
+});
+
+// Hero RE-ratio live jitter
+let heroBase = 68.0;
+setInterval(() => {
+  heroBase = 66 + Math.random() * 4;
+  const el = document.getElementById('heroRE');
+  if (el) el.textContent = heroBase.toFixed(1) + '%';
+}, 3000);
+
+/* ═══════════════════════════════════════════════════════
+   KPI DATA
+═══════════════════════════════════════════════════════ */
+const PILLARS = [
+  {
+    id:'energy', name:'⚡ Energy Pillar', accent:'#2aff7a', scoreColor:'#2aff7a',
+    desc:'Power Efficiency & Generation — tracks renewable integration, demand, and carbon intensity.',
+    kpis:[
+      { name:'EUI', fullName:'Energy Use Intensity', unit:'kWh/m²/yr', value:134, target:120, targetLabel:'< 120', direction:'lower', def:'Total annual energy consumed per unit area of the campus.', color:'amber', status:'warning', delta:'+12% above target', deltaDir:'neg', spark:[60,68,74,71,78,80,82,85,88,90,92,88] },
+      { name:'RE-Ratio', fullName:'Renewable Energy Ratio', unit:'%', value:68, target:35, targetLabel:'> 35%', direction:'higher', def:'Percentage of total campus load met by on-site renewables (Solar/Biogas).', color:'green', status:'on-track', delta:'+33pts above target', deltaDir:'pos', spark:[20,24,28,30,34,38,44,50,55,60,64,68] },
+      { name:'Grid Independence', fullName:'Grid Independence', unit:'%', value:61, target:71, targetLabel:'+10% YoY', direction:'higher', def:'Ratio of on-site production vs. energy imported from the municipal grid.', color:'amber', status:'warning', delta:'-9pts vs target', deltaDir:'neg', spark:[40,42,44,46,48,50,54,56,58,59,60,61] },
+      { name:'Peak Load Reduction', fullName:'Peak Load Reduction', unit:'kW', value:148, target:160, targetLabel:'15–20% of peak', direction:'higher', def:'Maximum demand reduction achieved during Scenario Events via AI Commands.', color:'green', status:'on-track', delta:'→ 17.6%', deltaDir:'pos', spark:[80,90,100,108,112,118,122,130,136,140,144,148] },
+      { name:'Carbon Intensity', fullName:'Carbon Intensity', unit:'kgCO₂e/m²', value:0.42, target:0.0, targetLabel:'0.0 (Net-Zero)', direction:'lower', def:'Total GHG emissions (Scope 1 & 2) normalized by campus floor area.', color:'red', status:'critical', delta:'0.42 remaining', deltaDir:'neg', spark:[0.9,0.84,0.78,0.72,0.68,0.62,0.58,0.54,0.50,0.47,0.44,0.42] }
+    ]
+  },
+  {
+    id:'water', name:'💧 Water Pillar', accent:'#4db8ff', scoreColor:'#4db8ff',
+    desc:'Hydraulic Neutrality — tracks reclaimed water usage, consumption intensity, leakage, and greywater recycling.',
+    kpis:[
+      { name:'Water Neutrality Index', fullName:'Water Neutrality Index', unit:'%', value:34, target:40, targetLabel:'> 40%', direction:'higher', def:'Total non-potable demand met by reclaimed or harvested water.', color:'amber', status:'warning', delta:'-6pts to target', deltaDir:'neg', spark:[10,14,18,20,22,25,27,29,30,32,33,34] },
+      { name:'WUI', fullName:'Water Use Intensity', unit:'L/occupant/day', value:112, target:105, targetLabel:'Reduce 25%', direction:'lower', def:'Average daily water consumption per person on campus.', color:'amber', status:'warning', delta:'-7L vs target', deltaDir:'neg', spark:[150,145,138,132,128,124,120,117,115,113,112,112] },
+      { name:'Leakage Detection', fullName:'Leakage Loss Rate', unit:'% loss', value:1.4, target:2, targetLabel:'< 2% Loss', direction:'lower', def:'Differential between main meter and sum of sub-meters, indicating distribution losses.', color:'green', status:'on-track', delta:'0.6% under cap', deltaDir:'pos', spark:[4.2,3.8,3.2,2.8,2.4,2.2,2.0,1.8,1.7,1.5,1.4,1.4] },
+      { name:'Graywater Recycle Rate', fullName:'Graywater Recycle Rate', unit:'%', value:74, target:80, targetLabel:'> 80% of Graywater', direction:'higher', def:'Volume of wastewater treated and returned to the non-potable distribution grid.', color:'amber', status:'warning', delta:'-6pts to target', deltaDir:'neg', spark:[40,44,50,54,58,62,64,67,69,71,72,74] }
+    ]
+  },
+  {
+    id:'waste', name:'♻️ Waste Pillar', accent:'#b97fff', scoreColor:'#b97fff',
+    desc:'Circular Economy — tracks landfill diversion, biogas conversion, AI-verified segregation, and zero-waste progress.',
+    kpis:[
+      { name:'Waste Diversion Rate', fullName:'Waste Diversion Rate', unit:'%', value:79, target:85, targetLabel:'> 85%', direction:'higher', def:'Percentage of total waste diverted from landfills via recycling or composting.', color:'amber', status:'warning', delta:'-6pts to target', deltaDir:'neg', spark:[50,54,58,62,64,67,70,72,74,76,78,79] },
+      { name:'Biogas Efficiency', fullName:'Biogas Conversion Efficiency', unit:'m³/kg', value:0.61, target:0.7, targetLabel:'0.5 – 0.7 m³/kg', direction:'higher', def:'Volume of methane produced per kg of organic cafeteria waste fed to the biodigester.', color:'green', status:'on-track', delta:'In target range', deltaDir:'pos', spark:[0.3,0.34,0.38,0.42,0.46,0.50,0.52,0.55,0.57,0.59,0.60,0.61] },
+      { name:'Segregation Accuracy', fullName:'AI Segregation Accuracy', unit:'%', value:97.2, target:95, targetLabel:'> 95%', direction:'higher', def:'AI-verified purity of the recyclable and organic waste streams at campus collection points.', color:'green', status:'on-track', delta:'+2.2pts above target', deltaDir:'pos', spark:[80,84,87,89,91,92,93,94,95,96,96.5,97.2] },
+      { name:'Zero-Waste Progress', fullName:'Zero-Waste to Landfill', unit:'%', value:79, target:100, targetLabel:'100% by 2030', direction:'higher', def:'Qualitative track toward Zero Waste to Landfill certification milestone.', color:'blue', status:'info', delta:'21pts to go', deltaDir:'neu', spark:[30,36,42,48,54,58,62,66,70,73,76,79] }
+    ]
+  },
+  {
+    id:'financial', name:'💰 Strategic & Financial', accent:'#f5a623', scoreColor:'#f5a623',
+    desc:'Business Viability — tracks ROI, payback periods, avoided costs, and social engagement.',
+    kpis:[
+      { name:'Simple Payback', fullName:'Simple Payback Period', unit:'Years', value:3.2, target:6, targetLabel:'< 6 Years', direction:'lower', def:'Time taken for energy savings to fully recover the initial CAPEX of each intervention.', color:'green', status:'on-track', delta:'2.8yr under cap', deltaDir:'pos', spark:[6.8,6.2,5.8,5.4,5.0,4.6,4.2,3.8,3.6,3.4,3.3,3.2] },
+      { name:'ROI', fullName:'Return on Investment', unit:'%', value:22.4, target:15, targetLabel:'> 15%', direction:'higher', def:'Annual total savings (energy + water + carbon credits) divided by total cumulative investment.', color:'green', status:'on-track', delta:'+7.4pts above target', deltaDir:'pos', spark:[8,10,12,13,15,16,17,18,19,20,21.5,22.4] },
+      { name:'Social Engagement', fullName:'Social Engagement Score', unit:'pts', value:8420, target:10000, targetLabel:'High Engagement', direction:'higher', def:'Measurement of student and staff participation in sustainability programs via the platform.', color:'amber', status:'warning', delta:'84% of target', deltaDir:'neu', spark:[2000,3000,4000,4800,5500,6200,6800,7200,7600,8000,8200,8420] },
+      { name:'Avoided Utility Cost', fullName:'Avoided Utility Cost', unit:'₹/yr', value:5420000, displayValue:'₹54.2L', target:null, targetLabel:'Track Monthly', direction:null, def:'Total monetary savings from reduced grid electricity consumption and municipal water bills.', color:'green', status:'info', delta:'+18% YoY', deltaDir:'pos', spark:[1.2,1.6,2.1,2.5,3.0,3.4,3.8,4.2,4.6,4.9,5.2,5.42].map(v=>v*1000000) }
+    ]
+  },
+  {
+    id:'ai', name:'🤖 AI & Monitoring', accent:'#2affee', scoreColor:'#2affee',
+    desc:'Innovation Depth — forecasting accuracy, response latency, and digital twin fidelity.',
+    kpis:[
+      { name:'Forecasting Accuracy', fullName:'AI Forecasting Accuracy', unit:'%', value:94.7, target:90, targetLabel:'> 90%', direction:'higher', def:'Delta between AI-predicted consumption/event spikes and actual sensor readings.', color:'green', status:'on-track', delta:'+4.7pts above target', deltaDir:'pos', spark:[72,75,78,80,82,85,87,89,90,92,93.5,94.7] },
+      { name:'Command Latency', fullName:'Command Execution Time', unit:'ms', value:214, target:500, targetLabel:'< 500ms', direction:'lower', def:'Latency between anomaly detection by the AI and the issuance of a corrective Grid Command.', color:'green', status:'on-track', delta:'286ms under cap', deltaDir:'pos', spark:[480,460,430,400,370,340,320,290,270,250,230,214] },
+      { name:'Twin Fidelity', fullName:'Digital Twin Fidelity', unit:'%', value:87, target:100, targetLabel:'100% UID Coverage', direction:'higher', def:'Percentage of physical campus assets mapped with a unique identifier in the digital twin.', color:'amber', status:'warning', delta:'13% assets unmapped', deltaDir:'neg', spark:[40,48,55,60,65,70,74,78,80,83,85,87] }
+    ]
+  }
+];
+
+/* ─── helpers ─── */
+const colorHex = { green:'#2aff7a', amber:'#f5a623', red:'#ff4d4d', blue:'#4db8ff', teal:'#2affee', purple:'#b97fff' };
+
+function progressPct(kpi) {
+  if (!kpi.direction) return 70;
+  if (kpi.direction === 'higher') return Math.min(100, (kpi.value / kpi.target) * 100);
+  if (kpi.direction === 'lower') {
+    if (kpi.target === 0) return Math.max(0, 100 - kpi.value * 80);
+    return Math.min(100, Math.max(4, (1 - (kpi.value - kpi.target) / kpi.target) * 100));
+  }
+  return 70;
+}
+
+function pillarScore(kpis) {
+  return Math.round(kpis.filter(k => k.status === 'on-track').length / kpis.length * 100);
+}
+
+function sparkSVG(data, color) {
+  const W=240, H=36, min=Math.min(...data), max=Math.max(...data), range=max-min||1;
+  const pts = data.map((v,i) => `${(i/(data.length-1))*W},${H-((v-min)/range)*(H-4)-2}`).join(' ');
+  const c = colorHex[color] || '#2aff7a';
+  const lx = W, ly = H-((data[data.length-1]-min)/range)*(H-4)-2;
+  return `<svg class="kpi-sparkline-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.5" stroke-linejoin="round" opacity="0.7"/>
+    <circle cx="${lx}" cy="${ly}" r="3" fill="${c}"/>
+  </svg>`;
+}
+
+function renderCard(kpi, delay) {
+  const pct = Math.max(4, Math.min(100, progressPct(kpi)));
+  const dv  = kpi.displayValue || kpi.value;
+  const badgeLabel = kpi.status === 'on-track' ? '✓ ON TRACK' : kpi.status === 'warning' ? '⚠ WARNING' : kpi.status === 'critical' ? '✕ CRITICAL' : 'ℹ INFO';
+  return `
+  <div class="kpi-card status-${kpi.status}" style="animation-delay:${delay}ms">
+    <div class="kpi-top">
+      <div class="kpi-name">${kpi.name}<small>${kpi.fullName}</small></div>
+      <div class="status-badge ${kpi.status}">${badgeLabel}</div>
+    </div>
+    <div class="kpi-value-row">
+      <div class="kpi-val" style="color:${colorHex[kpi.color]}">${dv}</div>
+      <div class="kpi-unit">${kpi.unit}</div>
+      <div class="kpi-delta ${kpi.deltaDir}">${kpi.delta}</div>
+    </div>
+    <div class="kpi-target-row">
+      <span class="kpi-target-label">TARGET</span>
+      <span class="kpi-target-val">${kpi.targetLabel}</span>
+    </div>
+    <div class="kpi-bar-wrap"><div class="kpi-bar-fill ${kpi.color}" style="width:${pct}%"></div></div>
+    ${sparkSVG(kpi.spark, kpi.color)}
+    <div class="kpi-def">${kpi.def}</div>
+  </div>`;
+}
+
+function renderPillar(p, filter, baseDelay) {
+  if (filter !== 'all' && p.id !== filter) return '';
+  const score = pillarScore(p.kpis);
+  let delay = baseDelay;
+  const cards = p.kpis.map(k => { const c = renderCard(k, delay); delay += 55; return c; }).join('');
+  return `
+  <div class="pillar-section" id="ps-${p.id}">
+    <div class="pillar-header">
+      <div class="pillar-accent" style="background:${p.accent}"></div>
+      <div class="pillar-header-text">
+        <div class="pillar-name">${p.name}</div>
+        <div class="pillar-desc">${p.desc}</div>
+      </div>
+      <div>
+        <div class="pillar-score-label">PILLAR SCORE</div>
+        <div class="pillar-score" style="color:${p.scoreColor}">${score}%</div>
+      </div>
+    </div>
+    <div class="kpi-grid">${cards}</div>
+  </div>`;
+}
+
+function renderAll(filter = 'all') {
+  let html = '', delay = 0;
+  PILLARS.forEach(p => { const s = renderPillar(p, filter, delay); if(s){ html += s; delay += p.kpis.length * 55 + 40; } });
+  document.getElementById('kpiBody').innerHTML = html;
+}
+
+function countStatuses() {
+  let on=0,warn=0,crit=0,info=0,total=0;
+  PILLARS.forEach(p => p.kpis.forEach(k => {
+    total++;
+    if(k.status==='on-track') on++;
+    else if(k.status==='warning') warn++;
+    else if(k.status==='critical') crit++;
+    else if(k.status==='info') info++;
+  }));
+  document.getElementById('chip-ontrack').textContent = on;
+  document.getElementById('chip-warning').textContent  = warn;
+  document.getElementById('chip-critical').textContent = crit;
+  document.getElementById('chip-info').textContent     = info;
+  document.getElementById('cnt-all').textContent       = total;
+}
+
+/* ─── KPI tabs ─── */
+document.querySelectorAll('.kpi-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.kpi-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderAll(tab.dataset.pillar);
+  });
+});
+
+/* ─── subtle live jitter every 8s ─── */
+function jitter() {
+  PILLARS.forEach(p => p.kpis.forEach(k => {
+    if (typeof k.value === 'number' && !k.displayValue) {
+      k.value = parseFloat((k.value + (Math.random()-.5) * 0.18).toFixed(2));
+      k.spark.push(k.value); k.spark.shift();
+    }
+  }));
+  const active = document.querySelector('.kpi-tab.active');
+  if (document.getElementById('page-kpi').classList.contains('active') && active) {
+    renderAll(active.dataset.pillar);
+  }
+}
+setInterval(jitter, 8000);
+
+/* ─── init ─── */
+countStatuses();
+renderAll('all');
+</script>
+</body>
+</html>

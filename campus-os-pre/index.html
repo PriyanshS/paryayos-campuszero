@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ParyayOS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="rotate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:system-ui;text-align:center;padding:2rem;">
+      <p style="font-size:1.25rem;margin-bottom:1rem;">Rotate your phone to landscape for the best experience.</p>
+      <p style="color:#71717a;font-size:0.875rem;">ParyayOS works best in horizontal or desktop mode.</p>
+    </div>
+    <script>
+      (function(){
+        function checkOrientation(){
+          var overlay=document.getElementById('rotate-overlay');
+          var root=document.getElementById('root');
+          if(!overlay) return;
+          var isMobile=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          var isPortrait=window.innerHeight > window.innerWidth;
+          if(isMobile && isPortrait){
+            overlay.style.display='flex';
+            if(root) root.style.visibility='hidden';
+          } else {
+            overlay.style.display='none';
+            if(root) root.style.visibility='';
+          }
+        }
+        window.addEventListener('resize',checkOrientation);
+        window.addEventListener('orientationchange',checkOrientation);
+        checkOrientation();
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

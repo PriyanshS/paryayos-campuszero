@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusZero — Net-Zero Energy Campus Platform</title>
+    <meta name="description"
+        content="CampusZero transforms your campus into a net-zero energy campus through a gamified digital twin platform. Monitor power, water, and waste. Get AI-powered recommendations.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060d0a;
+            --surface: #0d1a14;
+            --surface2: #122019;
+            --border: #1e3329;
+            --green: #2aff7a;
+            --green-dim: #1a9e4d;
+            --green-glow: rgba(42, 255, 122, 0.12);
+            --amber: #f5a623;
+            --blue: #4db8ff;
+            --purple: #b97fff;
+            --teal: #2affee;
+            --text: #e8f5ee;
+            --text-muted: #6b9478;
+            --text-dim: #3a5544;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 20% 10%, rgba(42, 255, 122, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 30% at 80% 80%, rgba(77, 184, 255, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(42, 255, 122, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(42, 255, 122, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            height: 64px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(6, 13, 10, 0.92);
+            backdrop-filter: blur(14px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(42, 255, 122, 0.4);
+            }
+
+            50% {
+                opacity: .7;
+                box-shadow: 0 0 0 8px rgba(42, 255, 122, 0);
+            }
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-pill {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 10px;
+            color: var(--text-dim);
+            background: var(--surface);
+            letter-spacing: 1px;
+        }
+
+        .nav-clock {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .nav-clock span {
+            color: var(--green);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 160px 40px 100px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .hero-eyebrow {
+            font-size: 11px;
+            color: var(--green-dim);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(40px, 5vw, 64px);
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 em {
+            color: var(--green);
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .hero-sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 480px;
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: var(--green);
+            color: var(--bg);
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            box-shadow: 0 0 40px rgba(42, 255, 122, 0.2);
+        }
+
+        .hero-cta:hover {
+            background: #3dffa0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 50px rgba(42, 255, 122, 0.35);
+        }
+
+        .hero-cta-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 28px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            margin-left: 12px;
+        }
+
+        .hero-cta-ghost:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-mockup {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-mockup::before {
+            content: 'LIVE DIGITAL TWIN';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: var(--green-dim);
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 60px);
+            gap: 6px;
+        }
+
+        .mockup-block {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: var(--text-dim);
+            gap: 2px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .mockup-block:hover {
+            border-color: var(--green-dim);
+            color: var(--text-muted);
+        }
+
+        .mockup-block.glow {
+            border-color: var(--green);
+            background: var(--green-glow);
+            color: var(--green);
+        }
+
+        .mockup-block.amber-glow {
+            border-color: var(--amber);
+            background: rgba(245, 166, 35, .08);
+            color: var(--amber);
+        }
+
+        .mockup-block .icon {
+            font-size: 16px;
+        }
+
+        .mockup-block.span2 {
+            grid-column: span 2;
+        }
+
+        .mockup-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px 10px;
+            background: var(--surface2);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .mockup-bar-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            width: 60px;
+        }
+
+        .mockup-bar-track {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .mockup-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        .mockup-bar-val {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            width: 40px;
+            text-align: right;
+        }
+
+        /* ── Features ── */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            background: var(--surface);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--green), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--green-dim);
+            transform: translateY(-2px);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .feature-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ── Stats ── */
+        .stats-bar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px 80px;
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-val {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 36px;
+            background: linear-gradient(135deg, var(--green), var(--teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-dim);
+            font-size: 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                padding: 120px 20px 60px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+
+        <!-- Navbar -->
+        <nav>
+            <div class="logo">
+                <div class="logo-dot"></div>CampusZero
+            </div>
+            <div class="nav-right">
+                <div class="nav-pill">NET-ZERO PLATFORM</div>
+                <div class="nav-clock">SYNC <span id="clock">--:--:--</span></div>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <div class="hero">
+            <div>
+                <div class="hero-eyebrow">NET-ZERO CAMPUS MANAGEMENT GAME</div>
+                <h1>Transform your campus<br>into <em>net zero.</em></h1>
+                <p class="hero-sub">A gamified digital twin platform where campus administrators monitor power, water,
+                    and waste — get AI-powered recommendations — and race to achieve net-zero status. Like SimCity, but
+                    for real campuses.</p>
+                <a href="app/app.html" class="hero-cta">🎮 Register Your Campus →</a>
+                <a href="campuszero-unified.html" class="hero-cta-ghost">📋 View Platform Overview</a>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-mockup">
+                    <div class="mockup-grid">
+                        <div class="mockup-block span2 glow"><span class="icon">☀️</span>Solar Array</div>
+                        <div class="mockup-block amber-glow"><span class="icon">🏢</span>Admin</div>
+                        <div class="mockup-block"><span class="icon">🔬</span>Lab</div>
+                        <div class="mockup-block glow"><span class="icon">🏫</span>Main Hall</div>
+                        <div class="mockup-block"><span class="icon">📚</span>Library</div>
+                        <div class="mockup-block"><span class="icon">🍽️</span>Café</div>
+                        <div class="mockup-block glow"><span class="icon">🔋</span>BESS</div>
+                        <div class="mockup-block"><span class="icon">🏠</span>Hostel A</div>
+                        <div class="mockup-block"><span class="icon">🏠</span>Hostel B</div>
+                        <div class="mockup-block span2 glow"><span class="icon">🌬️</span>Wind Zone</div>
+                    </div>
+                    <div class="mockup-bar">
+                        <div class="mockup-bar-label">🔴 Used</div>
+                        <div class="mockup-bar-track">
+                            <div class="mockup-bar-fill"
+                                style="width:72%;background:linear-gradient(90deg,#ff4d4d,#f5a623)"></div>
+                        </div>
+                        <div class="mockup-bar-val" style="color:var(--amber)">72%</div>
+                    </div>
+                    <div class="mockup-bar">
+                        <div class="mockup-bar-label">🟢 Gen</div>
+                        <div class="mockup-bar-track">
+                            <div class="mockup-bar-fill"
+                                style="width:58%;background:linear-gradient(90deg,var(--green-dim),var(--green))"></div>
+                        </div>
+                        <div class="mockup-bar-val" style="color:var(--green)">58%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🏛️</div>
+                <div class="feature-title">Living Digital Twin</div>
+                <div class="feature-desc">Procedurally generated 3D model of your campus using real map data. Every
+                    building is individually addressable and IoT-connected.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Static & Dynamic Ingestion</div>
+                <div class="feature-desc">Upload CSV files manually or connect simulated IoT sensors. Power, Water, and
+                    Waste — tracked daily with smart validation.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <div class="feature-title">Gamified Progress</div>
+                <div class="feature-desc">XP system with 10 levels. Improve your net-zero ratio daily to gain XP.
+                    Streaks, achievements, and leaderboard tracking.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">AI Prediction Engine</div>
+                <div class="feature-desc">Trains on your uploaded data. Predicts consumption trends, seasonal patterns,
+                    and generates actionable warnings.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Net-Zero Chatbot</div>
+                <div class="feature-desc">Ask for net-zero suggestions. Get 2-3 solution combos with cost, payback, and
+                    carbon offset. Add to your roadmap in one click.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">CoC-Style Alerts</div>
+                <div class="feature-desc">Game-like notifications when thresholds are breached. "Water tank full!" "Grid
+                    overload!" Accept or dismiss — every action feeds the game loop.</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-val">3</div>
+                <div class="stat-label">Monitoring Pillars</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val">10</div>
+                <div class="stat-label">Game Levels</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val">10+</div>
+                <div class="stat-label">Net-Zero Solutions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val">14</div>
+                <div class="stat-label">Hardware Items in CBA</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val">∞</div>
+                <div class="stat-label">Campuses Supported</div>
+            </div>
+        </div>
+
+        <footer>
+            <div>CampusZero · Net-Zero Campus Management Game · v1.0</div>
+            <div style="color:var(--green)">Built for a sustainable future 🌱</div>
+        </footer>
+
+    </div>
+
+    <script>
+        function updateClock() {
+            document.getElementById('clock').textContent =
+                new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+
+</html>
