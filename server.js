@@ -481,7 +481,7 @@ app.put('/api/twin', (req, res) => {
 // ═══════════════════════════════════════════════════════
 
 const { execFile } = require('child_process');
-const DB_PATH = path.join(__dirname, 'db', 'campuszero.db');
+const DB_PATH = path.join(__dirname, 'db', 'campuszero.json');
 
 function runPythonModel(script, args) {
     return new Promise((resolve, reject) => {

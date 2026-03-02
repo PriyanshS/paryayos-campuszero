@@ -10,7 +10,6 @@ Usage: python3 models/anomaly_detect.py <db_path> <campus_id> [pillar]
 import sys
 import json
 import math
-import sqlite3
 
 
 def z_score_detect(values, threshold=2.0):
@@ -81,19 +80,17 @@ def rate_of_change_detect(values, threshold_pct=50):
     return anomalies
 
 
-def analyze_pillar(conn, campus_id, pillar):
+def analyze_pillar(db_data, campus_id, pillar):
     """Run full anomaly detection on one pillar."""
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT data FROM readings WHERE campus_id = ? AND pillar = ? ORDER BY timestamp ASC",
-        (campus_id, pillar)
-    )
-    rows = cursor.fetchall()
+    readings = db_data.get('readings', [])
+    # Filter by campus and pillar, sort by timestamp
+    rows = [r for r in readings if r.get('campus_id') == campus_id and r.get('pillar') == pillar]
+    rows.sort(key=lambda x: x.get('timestamp', 0))
 
     if len(rows) < 5:
         return {"pillar": pillar, "error": "Insufficient data (need >= 5 readings)"}
 
-    entries = [json.loads(r[0]) for r in rows]
+    entries = [json.loads(r['data']) if isinstance(r['data'], str) else r['data'] for r in rows]
 
     # Determine primary field per pillar
     field_map = {
@@ -145,17 +142,19 @@ def analyze_pillar(conn, campus_id, pillar):
 
 def detect(db_path, campus_id, pillar=None):
     """Main anomaly detection pipeline."""
-    conn = sqlite3.connect(db_path)
+    try:
+        with open(db_path, 'r') as f:
+            db_data = json.load(f)
+    except Exception as e:
+        return {"error": f"Failed to load database: {str(e)}"}
 
     pillars = [pillar] if pillar else ["power", "water", "waste"]
     results = {}
     overall_health = 0
 
     for p in pillars:
-        results[p] = analyze_pillar(conn, campus_id, p)
+        results[p] = analyze_pillar(db_data, campus_id, p)
         overall_health += results[p].get("health_score", 0)
-
-    conn.close()
 
     overall_health = round(overall_health / len(pillars), 1)
 

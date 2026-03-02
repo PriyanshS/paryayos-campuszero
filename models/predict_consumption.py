@@ -11,7 +11,6 @@ Example: python3 models/predict_consumption.py db/campuszero.db 1 power consumpt
 import sys
 import json
 import math
-import sqlite3
 from datetime import datetime, timedelta
 
 
@@ -66,15 +65,16 @@ def detect_seasonality(values, period=30):
 
 def predict(db_path, campus_id, pillar, field, days_ahead=30):
     """Main prediction pipeline."""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    try:
+        with open(db_path, 'r') as f:
+            db_data = json.load(f)
+    except Exception as e:
+        return {"error": f"Failed to load database: {str(e)}", "predictions": []}
 
-    cursor.execute(
-        "SELECT data FROM readings WHERE campus_id = ? AND pillar = ? ORDER BY timestamp ASC",
-        (campus_id, pillar)
-    )
-    rows = cursor.fetchall()
-    conn.close()
+    readings = db_data.get('readings', [])
+    # Filter by campus and pillar, sort by timestamp
+    rows = [r for r in readings if r.get('campus_id') == campus_id and r.get('pillar') == pillar]
+    rows.sort(key=lambda x: x.get('timestamp', 0))
 
     if len(rows) < 7:
         return {"error": "Need at least 7 days of data", "predictions": []}
@@ -82,11 +82,11 @@ def predict(db_path, campus_id, pillar, field, days_ahead=30):
     # Extract field values
     values = []
     timestamps = []
-    for row in rows:
-        entry = json.loads(row[0])
-        val = entry.get(field, 0)
+    for entry in rows:
+        data = json.loads(entry['data']) if isinstance(entry['data'], str) else entry['data']
+        val = data.get(field, 0)
         values.append(float(val) if val else 0)
-        timestamps.append(entry.get("timestamp", 0))
+        timestamps.append(data.get("timestamp", 0))
 
     # Smooth and regress
     smoothed = moving_average(values, 7)

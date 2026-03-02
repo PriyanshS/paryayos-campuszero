@@ -10,7 +10,6 @@ Usage: python3 models/optimize_suggestions.py <db_path> <campus_id>
 import sys
 import json
 import math
-import sqlite3
 
 
 # Solution catalog with costs in INR
@@ -84,9 +83,7 @@ SOLUTIONS = {
 
 def calculate_gap(readings, pillar):
     """Calculate the consumption-generation gap."""
-    entries = [json.loads(r[0]) for r in readings]
-    if not entries:
-        return 0, 0, 0
+    entries = [json.loads(r['data']) if isinstance(r['data'], str) else r['data'] for r in readings]
 
     if pillar == "power":
         consumption = sum(e.get("consumption_kwh", 0) for e in entries) / len(entries)
@@ -118,19 +115,20 @@ def knapsack_optimize(items, budget):
     return selected
 
 
-def generate_portfolio(conn, campus_id, budget_lakhs=50):
+def generate_portfolio(db_data, campus_id, budget_lakhs=50):
     """Generate optimal intervention portfolio."""
-    cursor = conn.cursor()
     budget = budget_lakhs * 100000  # Convert to INR
 
     # Fetch data for each pillar
     pillar_data = {}
+    all_readings = db_data.get('readings', [])
+
     for pillar in ["power", "water", "waste"]:
-        cursor.execute(
-            "SELECT data FROM readings WHERE campus_id = ? AND pillar = ? ORDER BY timestamp DESC LIMIT 30",
-            (campus_id, pillar)
-        )
-        rows = cursor.fetchall()
+        # Filter and get last 30
+        rows = [r for r in all_readings if r.get('campus_id') == campus_id and r.get('pillar') == pillar]
+        rows.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+        rows = rows[:30]
+
         cons, gen, gap = calculate_gap(rows, pillar)
         pillar_data[pillar] = {"consumption": cons, "generation": gen, "gap": gap, "count": len(rows)}
 
@@ -266,8 +264,12 @@ if __name__ == "__main__":
     campus_id = int(sys.argv[2])
     budget = int(sys.argv[3]) if len(sys.argv) > 3 else 50
 
-    conn = sqlite3.connect(db_path)
-    result = generate_portfolio(conn, campus_id, budget)
-    conn.close()
+    try:
+        with open(db_path, 'r') as f:
+            db_data = json.load(f)
+    except Exception as e:
+        print(json.dumps({"error": f"Failed to load database: {str(e)}"}))
+        sys.exit(1)
 
+    result = generate_portfolio(db_data, campus_id, budget)
     print(json.dumps(result))
